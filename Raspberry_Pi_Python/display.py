@@ -10,7 +10,7 @@ from typing import List
 
 import requests
 
-# import board
+import board
 from adafruit_ht16k33.segments import Seg7x4
 from luma.core.interface.serial import spi
 from luma.core.render import canvas
@@ -58,29 +58,45 @@ def train_times(station: str, direction: str, vehicle_type: str) -> List[datetim
     return commuter_rail_times
 
 
-def display(times: List[datetime.datetime]) -> None:
+def display(times: List[datetime.datetime], min_clock_display: int = 0) -> None:
     """
     TODO Fill this
     """
     # TODO fix below for the times
-    # Clock display
+    # setup clock display
     i2c = board.I2C()
     display = Seg7x4(i2c)
     display.brightness = 0.7
-    now = datetime.datetime.now()
-    next_train = times[0] - now
-    display.print(next_train)
-
-    # Screen display
+    # Setup screen display
     serial = spi()
     device = sh1106(serial)
+    if len(times) > 0:
+        now = datetime.datetime.now()
+        next_train = times[0] - now
+        next_train_seconds = str(next_train.seconds % 60)
+        if len(next_train_seconds) == 1:
+            next_train_seconds = f"0{next_train_seconds}"
+        next_train_minutes = str(int(next_train.seconds / 60))
+        if len(next_train_minutes) == 1:
+            next_train_minutes = f"0{next_train_seconds}"
+        if len(next_train_minutes) == 2 and int(next_train_minutes) > min_clock_display:
+            display.print(f"{next_train_minutes}:{next_train_seconds}")
+        else:
+            display = Seg7x4(i2c)
 
-    with canvas(device) as draw:
-        draw.rectangle(device.bounding_box, outline="white", fill="black")
-        draw.text((10, 10), f"Next train at {next_train}", fill="white")
-        draw.text((10, 20), f"Second train at {second_train}", fill="white")
-        draw.text((10, 30), f"Third train at {third_train}", fill="white")
-    time.sleep(10)
+        # Screen display
+
+        with canvas(device) as draw:
+            draw.rectangle(device.bounding_box, outline="white", fill="black")
+            draw.text((10, 10), f"Next train at {times[0].strftime('%H:%M')}", fill="white")
+#            draw.text((10, 20), f"Second train at {second_train}", fill="white")
+#            draw.text((10, 30), f"Third train at {third_train}", fill="white")
+        time.sleep(10)
+    else:
+        with canvas(device) as draw:
+            draw.rectangle(device.bounding_box, outline="white", fill="black")
+            draw.text((10, 10), "No Predicted Arrivals", fill="white")
+        time.sleep(10)
 
 
 def main():
