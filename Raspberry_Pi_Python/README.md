@@ -25,11 +25,13 @@ Will be different for I2C or parallel
 
 ### Clock display
 https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack-python-wiring-and-setup
+<table>
 <tr><th>Label</th><th>Desc</th><th>RasPin</th><th>RasDesc</th></tr>
 <tr><td>GND</td><td>Ground</td><td>6</td><td>Ground</td></tr>
 <tr><td>VCC</td><td>3.3 V</td><td>1</td><td>3.3 Volts</td></tr>
 <tr><td>SDA</td><td>I2C SDA</td><td>3</td><td>GPIO2 (SDA)</td></tr>
 <tr><td>SCL</td><td>I2C SCL</td><td>5</td><td>GPIO3 (SCL)</td></tr>
+</table>
 
 ## How to run
 `python display.py`
