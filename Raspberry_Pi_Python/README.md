@@ -5,7 +5,7 @@ Required:<br>
 <ul>
 <li>Raspberry Pi (zero W). <a href=https://www.adafruit.com/product/3400>Can be purchased here</a></li>
 <li>sh1106 display with SPI (I2C will work with modification). <a href=https://www.amazon.com/gp/product/B01N1LZT8L/>Can be purchased here</a></li>
-<li>7 segment clock display. <a href=https://www.adafruit.com/product/3400>Can be purchased here</a></ul>
+<li>7 segment clock display.  Adafruit 0.56" 4-Digit 7-Segment Display w/I2C Backpack. <a href=https://www.adafruit.com/product/3400>Can be purchased here</a></ul>
 </ul>
 
 ## Connections
@@ -32,6 +32,9 @@ https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack
 <tr><td>SDA</td><td>I2C SDA</td><td>3</td><td>GPIO2 (SDA)</td></tr>
 <tr><td>SCL</td><td>I2C SCL</td><td>5</td><td>GPIO3 (SCL)</td></tr>
 </table>
+<a href="https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack-python-wiring-and-setup">
+<img source="./Adafruit_056_7_segment_backpack.png">
+</a>
 
 ## How to run
 `python display.py`
