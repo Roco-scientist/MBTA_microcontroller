@@ -7,7 +7,7 @@ import sys
 import time
 import requests
 import argparse
-from datetime
+import datetime
 from adafruit_ht16k33.segments import Seg7x4
 from luma.core.interface.serial import spi
 from luma.core.render import canvas
@@ -25,24 +25,24 @@ def arguments():
     return parser.parse_args()
 
 
-def train_times(station: str = "forhl") -> List[datetime.datetime, datetime.datetime, datetime.datetime]:
+def train_times(station: str = "forhl") -> list:
     """
     TODO: Fill this
     """
     mbta_api_site = f"https://api-v3.mbta.com/predictions?filter[stop]=place-{station}&filter[direction_id]=1&include=stop"
     predictions = requests.get(mbta_api_site).json()
     predictions_data = predictions['data']
-    # Only take times that have a route id of
-    # TODO Change Orange below to cr-south station or whatever needed.  Just orange for testing
+    # Only take times that have a route id of cummuter rail
     commuter_rail_predictions = [prediction['attributes']['departure_time'] for prediction in predictions_data
-                                if prediction['relationships']['route']['data']['id'] == 'Orange']
+                                if prediction['relationships']['route']['data']['id'] == 'CR-Needham']
     # Convert the times to datetime format
     commuter_rail_times = [datetime.datetime.fromisoformat(dtime.replace("-04:00", "")) for dtime in commuter_rail_predictions]
     commuter_rail_times.sort()
+    breakpoint()
     return commuter_rail_times[:3]
 
 
-def display(times: List[]) -> None:
+def display(times: list) -> None:
     """
     TODO Fill this
     """
