@@ -2,10 +2,15 @@
 ## Required hardware
 Work in progress <br>
 Required:<br>
-<ul><li>Raspberry Pi (zero W)</li><li>sh1106 display with SPI (I2C will work with modification)</li></ul>
+<ul>
+<li>Raspberry Pi (zero W). <a href=https://www.adafruit.com/product/3400>Can be purchased here</a></li>
+<li>sh1106 display with SPI (I2C will work with modification). <a href=https://www.amazon.com/gp/product/B01N1LZT8L/>Can be purchased here</a></li>
+<li>7 segment clock display. <a href=https://www.adafruit.com/product/3400>Can be purchased here</a></ul>
+</ul>
 
 ## Connections
-Connections for SPI display to raspberry pi pins<br>
+
+### Screen display
 Will be different for I2C or parallel
 <table>
 <tr><th>Label</th><th>Desc</th><th>RasPin</th><th>RasDesc</th></tr>
@@ -17,6 +22,9 @@ Will be different for I2C or parallel
 <tr><td>DC</td><td></td><td>18</td><td>GPIO24</td></tr>
 <tr><td>CS</td><td>CE0</td><td>24</td><td>CE0 (SPI)</td></tr>
 </table>
+
+### Clock display
+https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack-python-wiring-and-setup
 
 ## How to run
 `python display.py`
