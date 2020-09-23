@@ -6,7 +6,7 @@ import argparse
 import datetime
 import sys
 import time
-from typing import List
+from typing import List, Optional
 
 import requests
 
@@ -52,17 +52,41 @@ def train_times(station: str, direction: str, vehicle_type: str) -> List[datetim
     commuter_rail_predictions = [prediction['attributes']['departure_time'] for prediction in predictions_data
                                  if prediction['relationships']['route']['data']['id'] == 'CR-Needham']
     # Convert the times to datetime format
-    commuter_rail_times = [datetime.datetime.fromisoformat(
-        dtime.replace("-04:00", "")) for dtime in commuter_rail_predictions]
+    commuter_rail_times = [datetime.datetime.fromisoformat(dtime.replace("-04:00", "")) 
+                           for dtime in commuter_rail_predictions]
     commuter_rail_times.sort()
     return commuter_rail_times
+
+
+def clear_clock() -> None:
+    """
+    TODO Fill this
+    """
+    i2c = board.I2C()
+    display = Seg7x4(i2c)
+
+
+def clock_countdown_time(train_time) -> Optional[str]:
+    """
+    TODO Fill this
+    """
+    now = datetime.datetime.now()
+    next_train = train_time - now
+    next_train_seconds = str(next_train.seconds % 60)
+    if len(next_train_seconds) == 1:
+        next_train_seconds = f"0{next_train_seconds}"
+    next_train_minutes = str(int(next_train.seconds / 60))
+    if len(next_train_minutes) == 1:
+        next_train_minutes = f"0{next_train_seconds}"
+    if len(next_train_minutes) == 2 and int(next_train_minutes) > min_clock_display:
+        return f"{next_train_minutes}:{next_train_seconds}"
+    return None
 
 
 def display(times: List[datetime.datetime], min_clock_display: int = 0) -> None:
     """
     TODO Fill this
     """
-    # TODO fix below for the times
     # setup clock display
     i2c = board.I2C()
     display = Seg7x4(i2c)
@@ -71,38 +95,31 @@ def display(times: List[datetime.datetime], min_clock_display: int = 0) -> None:
     serial = spi()
     device = sh1106(serial)
     if len(times) > 0:
-        now = datetime.datetime.now()
-        next_train = times[0] - now
-        next_train_seconds = str(next_train.seconds % 60)
-        if len(next_train_seconds) == 1:
-            next_train_seconds = f"0{next_train_seconds}"
-        next_train_minutes = str(int(next_train.seconds / 60))
-        if len(next_train_minutes) == 1:
-            next_train_minutes = f"0{next_train_seconds}"
-        if len(next_train_minutes) == 2 and int(next_train_minutes) > min_clock_display:
-            display.print(f"{next_train_minutes}:{next_train_seconds}")
-        else:
-            display = Seg7x4(i2c)
-
-        # Screen display
-
         with canvas(device) as draw:
             draw.rectangle(device.bounding_box, outline="white", fill="black")
-            draw.text((10, 10), f"Next train at {times[0].strftime('%H:%M')}", fill="white")
+            draw.text((5, 10), f"Next at {times[0].strftime('%H:%M')}", fill="white")
 #            draw.text((10, 20), f"Second train at {second_train}", fill="white")
 #            draw.text((10, 30), f"Third train at {third_train}", fill="white")
-        time.sleep(10)
+        train_countdown = clock_countdown_time(times[0])
+        for _ in range(10):
+            if train_countdown is not None:
+                display.print(train_countdown)
+            else:
+                clear_clock()
+            time.sleep(0.5)
     else:
         with canvas(device) as draw:
             draw.rectangle(device.bounding_box, outline="white", fill="black")
-            draw.text((10, 10), "No Predicted Arrivals", fill="white")
-        time.sleep(10)
+            draw.text((5, 10), "No Predicted Arrivals", fill="white")
+        time.sleep(5)
 
 
 def main():
     args = arguments()
-    times = train_times(station=args.station, direction=args.direction, vehicle_type=args.type)
-    display(times)
+    for _ in range(5):
+        times = train_times(station=args.station, direction=args.direction, vehicle_type=args.type)
+        display(times)
+    clear_clock()
 
 
 if __name__ == "__main__":
