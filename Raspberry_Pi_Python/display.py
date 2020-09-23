@@ -6,7 +6,7 @@ import argparse
 import datetime
 import sys
 import time
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import requests
 
@@ -35,6 +35,39 @@ def arguments():
     return parser.parse_args()
 
 
+def get_routes_times(api: str) -> Dict[str, datetime.datetime]:
+    api_retrieval = requests.get(api).json()
+    api_data = api_retrieval['data']
+    commuter_rail_dep_time = {prediction['relationships']['trip']['data']['id']:
+            datetime.datetime.fromisoformat(prediction['attributes']['departure_time'].replace("-04:00", "")) 
+            for data in api_data}
+#    commuter_rail_times = [datetime.datetime.fromisoformat(dtime.replace("-04:00", "")) 
+#                           for dtime in commuter_rail_dep_time]
+#    commuter_rail_times.sort()
+    return commuter_rail_dep_time
+
+
+def get_scheduled_times(station: str, dir_code: str, vehicle_type: str) -> Dict[str, datetime.datetime]:
+    """
+    TODO Fille this
+    """
+    now = datetime.now()
+    schedules_api =
+    f"https://api-v3.mbta.com/schedules?include=route,trip,stop&filter[min_time]={now.hour}%3A{now.minute}&filter[stop]=place-{station}&filter[route]=CR-Needham&filter[direction_id]={dir_code}"
+    scheduled_times = get_routes_times(schedules_api)
+    return scheduled_times
+
+
+def get_prediction_times(station: str, dir_code: str, vehicle_type: str) -> Dict[str, datetime.datetime]:
+    """
+    TODO Fill this
+    """
+    predictions_api =
+    f"https://api-v3.mbta.com/predictions?filter[stop]=place-{station}&filter[direction_id]={dir_code}&include=stop&filter[route]=CR-Needham"
+    prediction_times = get_routes_times(predictions_api)
+    return prediction_times
+
+
 def train_times(station: str, direction: str, vehicle_type: str) -> List[datetime.datetime]:
     """
     TODO: Fill this
@@ -45,15 +78,13 @@ def train_times(station: str, direction: str, vehicle_type: str) -> List[datetim
         dir_code = 0
     else:
         raise SystemError(f"Direction not recognized: {direction}")
-    mbta_api_site =
-    f"https://api-v3.mbta.com/predictions?filter[stop]=place-{station}&filter[direction_id]={dir_code}&include=stop&filter[route]=CR-Needham"
-    predictions = requests.get(mbta_api_site).json()
-    predictions_data = predictions['data']
-    # Only take times that have a route id of cummuter rail
-    commuter_rail_predictions = [prediction['attributes']['departure_time'] for prediction in predictions_data]
-    # Convert the times to datetime format
-    commuter_rail_times = [datetime.datetime.fromisoformat(dtime.replace("-04:00", "")) 
-                           for dtime in commuter_rail_predictions]
+    scheduled_times = get_scheduled_times(stations, dir_code, vehicle_type)
+    prediction_times = get_prediction_times(stations, dir_code, vehicle_type)
+    for trip_id in prediction_times.keys():
+        if trip_id not in list(scheduled_times.keys()):
+            raise SystemError("Trip ID did not match.  Check code")
+        scheduled_times[trip_id] = prediction_times[trip_id]
+    commuter_rail_times = list(scheduled_times.values())
     commuter_rail_times.sort()
     return commuter_rail_times
 
