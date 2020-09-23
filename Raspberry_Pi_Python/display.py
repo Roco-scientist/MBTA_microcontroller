@@ -45,12 +45,12 @@ def train_times(station: str, direction: str, vehicle_type: str) -> List[datetim
         dir_code = 0
     else:
         raise SystemError(f"Direction not recognized: {direction}")
-    mbta_api_site = f"https://api-v3.mbta.com/predictions?filter[stop]=place-{station}&filter[direction_id]={dir_code}&include=stop"
+    mbta_api_site =
+    f"https://api-v3.mbta.com/predictions?filter[stop]=place-{station}&filter[direction_id]={dir_code}&include=stop&filter[route]=CR-Needham"
     predictions = requests.get(mbta_api_site).json()
     predictions_data = predictions['data']
     # Only take times that have a route id of cummuter rail
-    commuter_rail_predictions = [prediction['attributes']['departure_time'] for prediction in predictions_data
-                                 if prediction['relationships']['route']['data']['id'] == 'CR-Needham']
+    commuter_rail_predictions = [prediction['attributes']['departure_time'] for prediction in predictions_data]
     # Convert the times to datetime format
     commuter_rail_times = [datetime.datetime.fromisoformat(dtime.replace("-04:00", "")) 
                            for dtime in commuter_rail_predictions]
