@@ -178,19 +178,20 @@ def clock_countdown_time(train_times: List[datetime.datetime], min_clock_display
     return None
 
 
-def display(times: List[datetime.datetime], min_clock_display: int = 0) -> None:
+def display(times: List[datetime.datetime], min_clock_display: int = 0, new: bool = True) -> None:
     """
     Pulls in times and pushes the information to the clock and screen display
     :times: list of departure times
     :min_clock_display: the minimum difference in minutes to display on the countdown clock
     """
-    # setup clock display
-    i2c = board.I2C()
-    display = Seg7x4(i2c)
-    display.brightness = 0.7
-    # Setup screen display
-    serial = spi()
-    device = sh1106(serial)
+    if new:
+        # setup clock display
+        i2c = board.I2C()
+        display = Seg7x4(i2c)
+        display.brightness = 0.7
+        # Setup screen display
+        serial = spi()
+        device = sh1106(serial)
     # If there are departure times, continue
     if len(times) > 0:
         # Display times on the SPI sh1106 screen
