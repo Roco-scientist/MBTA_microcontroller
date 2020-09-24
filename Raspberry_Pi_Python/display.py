@@ -156,18 +156,20 @@ def clock_countdown_time(train_times: List[datetime.datetime], min_clock_display
     # Get the difference between the soonest train and now
     train_num = 0
     next_train = train_times[train_num] - now
+    # get the minutes for the display
+    next_train_minutes = next_train.seconds / 60
     # While the difference is less than the minimum, use the next train/bus
-    while ((next_train.second / 60) < min_clock_display) and train_num < len(train_times):
+    while (next_train_minutes < min_clock_display) and train_num < len(train_times):
         train_num += 1
         next_train = train_times[train_num] - now
+        next_train_minutes = next_train.seconds / 60
     # get seconds for the display
     next_train_seconds = str(next_train.seconds % 60)
     # make sure it is 0 padded
     if len(next_train_seconds) == 1:
         next_train_seconds = f"0{next_train_seconds}"
-    # get the minutes for the display
-    next_train_minutes = str(int(next_train.seconds / 60))
     # make sure it is 0 padded
+    next_train_minutes = str(int(next_train_minutes))
     if len(next_train_minutes) == 1:
         next_train_minutes = f"0{next_train_seconds}"
     # If minutes are not a length of 3 (too large for display)
@@ -188,7 +190,7 @@ def display(times: List[datetime.datetime], min_clock_display: int = 0, new: boo
         # setup clock display
         i2c = board.I2C()
         display = Seg7x4(i2c)
-        display.brightness = 0.7
+        display.brightness = 0.4
         # Setup screen display
         serial = spi()
         device = sh1106(serial)
@@ -197,13 +199,13 @@ def display(times: List[datetime.datetime], min_clock_display: int = 0, new: boo
         # Display times on the SPI sh1106 screen
         with canvas(device) as draw:
             draw.rectangle(device.bounding_box, outline="white", fill="black")
-            draw.text((15, 10), "Schedule: ", fill="white")
+            draw.text((25, 10), "Schedule: ", fill="white")
             # For up to 3 train times, display their schedule
             for x in range(min(3, len(times))):
                 train_num = x + 1
                 display_y = (train_num * 10) + 10
                 # Display train number and departure time
-                draw.text((15, display_y), f"{train_num}: {times[x].strftime('%H:%M')}", fill="white")
+                draw.text((25, display_y), f"{train_num}: {times[x].strftime('%H:%M')}", fill="white")
         # Update coutdown clock every half second
         for _ in range(10):
             # Get the countdown display time
@@ -231,7 +233,7 @@ def main() -> None:
     args = arguments()
     # loop for retrieving new times and display.  Will try to adjust in the future to kill with a
     # different thread
-    for _ in range(5):
+    for _ in range(15):
         # get departure times
         times = train_times(station=args.station, direction=args.direction, vehicle_type=args.type)
         # display departure times and countdown on screen and clock
