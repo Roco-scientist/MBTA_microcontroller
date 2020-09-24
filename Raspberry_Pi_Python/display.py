@@ -6,6 +6,7 @@ import argparse
 import datetime
 import sys
 import time
+import concurrent.futures
 from typing import List, Optional, Dict
 
 import requests
@@ -230,14 +231,21 @@ def display(times: List[datetime.datetime], min_clock_display: int = 0, new: boo
 
 def main() -> None:
     # retrieve arguments
-    args = arguments()
+    script_args = arguments()
     # loop for retrieving new times and display.  Will try to adjust in the future to kill with a
     # different thread
-    for _ in range(15):
+    # get departure times
+    times = train_times(station=script_args.station, direction=script_args.direction, vehicle_type=script_args.type)
+    # display departure times and countdown on screen and clock
+    display(times)
+    for _ in range(1):
         # get departure times
-        times = train_times(station=args.station, direction=args.direction, vehicle_type=args.type)
+        executor = concurrent.futures.ThreadPoolExecutor()
+        future = executor.submit(train_times, script_args.station, script_args.direction, script_args.type)
         # display departure times and countdown on screen and clock
         display(times)
+        times = future.result()
+        executor.close()
     # clear clock when done
     clear_clock()
 
