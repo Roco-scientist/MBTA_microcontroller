@@ -37,22 +37,24 @@ def arguments():
 
 def get_routes_times(api: str) -> Dict[str, datetime.datetime]:
     api_retrieval = requests.get(api).json()
-    api_data = api_retrieval['data']
-    commuter_rail_dep_time = {prediction['relationships']['trip']['data']['id']:
-            datetime.datetime.fromisoformat(prediction['attributes']['departure_time'].replace("-04:00", "")) 
-            for data in api_data}
-#    commuter_rail_times = [datetime.datetime.fromisoformat(dtime.replace("-04:00", "")) 
-#                           for dtime in commuter_rail_dep_time]
-#    commuter_rail_times.sort()
-    return commuter_rail_dep_time
+    if len(api_retrieval) > 0:
+        api_data = api_retrieval['data']
+        commuter_rail_dep_time = {data['relationships']['trip']['data']['id']:
+                datetime.datetime.fromisoformat(data['attributes']['departure_time'].replace("-04:00", "")) 
+                for data in api_data}
+    #    commuter_rail_times = [datetime.datetime.fromisoformat(dtime.replace("-04:00", "")) 
+    #                           for dtime in commuter_rail_dep_time]
+    #    commuter_rail_times.sort()
+        return commuter_rail_dep_time
+    return dict()
 
 
 def get_scheduled_times(station: str, dir_code: str, vehicle_type: str) -> Dict[str, datetime.datetime]:
     """
     TODO Fille this
     """
-    now = datetime.now()
-    schedules_api =
+    now = datetime.datetime.now()
+    schedules_api = \
     f"https://api-v3.mbta.com/schedules?include=route,trip,stop&filter[min_time]={now.hour}%3A{now.minute}&filter[stop]=place-{station}&filter[route]=CR-Needham&filter[direction_id]={dir_code}"
     scheduled_times = get_routes_times(schedules_api)
     return scheduled_times
@@ -62,7 +64,7 @@ def get_prediction_times(station: str, dir_code: str, vehicle_type: str) -> Dict
     """
     TODO Fill this
     """
-    predictions_api =
+    predictions_api = \
     f"https://api-v3.mbta.com/predictions?filter[stop]=place-{station}&filter[direction_id]={dir_code}&include=stop&filter[route]=CR-Needham"
     prediction_times = get_routes_times(predictions_api)
     return prediction_times
@@ -78,13 +80,15 @@ def train_times(station: str, direction: str, vehicle_type: str) -> List[datetim
         dir_code = 0
     else:
         raise SystemError(f"Direction not recognized: {direction}")
-    scheduled_times = get_scheduled_times(stations, dir_code, vehicle_type)
-    prediction_times = get_prediction_times(stations, dir_code, vehicle_type)
+    scheduled_times = get_scheduled_times(station, dir_code, vehicle_type)
+    prediction_times = get_prediction_times(station, dir_code, vehicle_type)
     for trip_id in prediction_times.keys():
         if trip_id not in list(scheduled_times.keys()):
             raise SystemError("Trip ID did not match.  Check code")
         scheduled_times[trip_id] = prediction_times[trip_id]
     commuter_rail_times = list(scheduled_times.values())
+    now = datetime.datetime.now()
+    commuter_rail_times = [time for time in commuter_rail_times if time > now]
     commuter_rail_times.sort()
     return commuter_rail_times
 
@@ -97,7 +101,7 @@ def clear_clock() -> None:
     display = Seg7x4(i2c)
 
 
-def clock_countdown_time(train_time) -> Optional[str]:
+def clock_countdown_time(train_time, min_clock_display) -> Optional[str]:
     """
     TODO Fill this
     """
@@ -128,11 +132,13 @@ def display(times: List[datetime.datetime], min_clock_display: int = 0) -> None:
     if len(times) > 0:
         with canvas(device) as draw:
             draw.rectangle(device.bounding_box, outline="white", fill="black")
-            draw.text((5, 10), f"Next at {times[0].strftime('%H:%M')}", fill="white")
-#            draw.text((10, 20), f"Second train at {second_train}", fill="white")
-#            draw.text((10, 30), f"Third train at {third_train}", fill="white")
-        train_countdown = clock_countdown_time(times[0])
+            draw.text((5, 10), "Schedule: ", fill="white")
+            for x in range(min(3, len(times))):
+                train_num = x + 1
+                display_y = (train_num * 10) + 10
+                draw.text((5, display_y), f"{train_num}: {times[x].strftime('%H:%M')}", fill="white")
         for _ in range(10):
+            train_countdown = clock_countdown_time(times[0], min_clock_display)
             if train_countdown is not None:
                 display.print(train_countdown)
             else:
