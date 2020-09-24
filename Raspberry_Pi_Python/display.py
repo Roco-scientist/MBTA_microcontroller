@@ -238,14 +238,14 @@ def main() -> None:
     times = train_times(station=script_args.station, direction=script_args.direction, vehicle_type=script_args.type)
     # display departure times and countdown on screen and clock
     display(times)
-    for _ in range(1):
+    for _ in range(10):
         # get departure times
         executor = concurrent.futures.ThreadPoolExecutor()
         future = executor.submit(train_times, script_args.station, script_args.direction, script_args.type)
         # display departure times and countdown on screen and clock
         display(times)
         times = future.result()
-        executor.close()
+        executor.shutdown(wait=False)
     # clear clock when done
     clear_clock()
 
