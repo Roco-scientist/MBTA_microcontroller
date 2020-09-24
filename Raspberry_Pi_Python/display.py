@@ -6,6 +6,7 @@ import argparse
 import datetime
 import sys
 import time
+import concurrent.futures
 from typing import List, Optional, Dict
 
 import requests
@@ -45,7 +46,7 @@ def get_routes_times(api: str) -> Dict[str, datetime.datetime]:
     # Retrieve the MBTA data JSON
     api_retrieval = requests.get(api).json()
     # If there is any data proceed
-    if len(api_retrieval) > 0:
+    if len(api_retrieval) > 0 and 'data' in list(api_retrieval.keys()):
         # Pull data child node.  There are a couple of other nodes not wanted
         api_data = api_retrieval['data']
         # Create dictionary of {trip id: departure time}
@@ -156,18 +157,20 @@ def clock_countdown_time(train_times: List[datetime.datetime], min_clock_display
     # Get the difference between the soonest train and now
     train_num = 0
     next_train = train_times[train_num] - now
+    # get the minutes for the display
+    next_train_minutes = next_train.seconds / 60
     # While the difference is less than the minimum, use the next train/bus
-    while ((next_train.second / 60) < min_clock_display) and train_num < len(train_times):
+    while (next_train_minutes < min_clock_display) and train_num < len(train_times):
         train_num += 1
         next_train = train_times[train_num] - now
+        next_train_minutes = next_train.seconds / 60
     # get seconds for the display
     next_train_seconds = str(next_train.seconds % 60)
     # make sure it is 0 padded
     if len(next_train_seconds) == 1:
         next_train_seconds = f"0{next_train_seconds}"
-    # get the minutes for the display
-    next_train_minutes = str(int(next_train.seconds / 60))
     # make sure it is 0 padded
+    next_train_minutes = str(int(next_train_minutes))
     if len(next_train_minutes) == 1:
         next_train_minutes = f"0{next_train_seconds}"
     # If minutes are not a length of 3 (too large for display)
@@ -178,38 +181,32 @@ def clock_countdown_time(train_times: List[datetime.datetime], min_clock_display
     return None
 
 
-def display(times: List[datetime.datetime], min_clock_display: int = 0) -> None:
+def display(times: List[datetime.datetime], screen_display,
+        clock_display, min_clock_display: int = 0) -> None:
     """
     Pulls in times and pushes the information to the clock and screen display
     :times: list of departure times
     :min_clock_display: the minimum difference in minutes to display on the countdown clock
     """
-    # setup clock display
-    i2c = board.I2C()
-    display = Seg7x4(i2c)
-    display.brightness = 0.7
-    # Setup screen display
-    serial = spi()
-    device = sh1106(serial)
     # If there are departure times, continue
     if len(times) > 0:
         # Display times on the SPI sh1106 screen
-        with canvas(device) as draw:
-            draw.rectangle(device.bounding_box, outline="white", fill="black")
-            draw.text((15, 10), "Schedule: ", fill="white")
+        with canvas(screen_display) as draw:
+            draw.rectangle(screen_display.bounding_box, outline="white", fill="black")
+            draw.text((25, 10), "Schedule: ", fill="white")
             # For up to 3 train times, display their schedule
             for x in range(min(3, len(times))):
                 train_num = x + 1
                 display_y = (train_num * 10) + 10
                 # Display train number and departure time
-                draw.text((15, display_y), f"{train_num}: {times[x].strftime('%H:%M')}", fill="white")
+                draw.text((25, display_y), f"{train_num}: {times[x].strftime('%H:%M')}", fill="white")
         # Update coutdown clock every half second
         for _ in range(10):
             # Get the countdown display time
             train_countdown = clock_countdown_time(times, min_clock_display)
             # If a time is returned, display
             if train_countdown is not None:
-                display.print(train_countdown)
+                clock_display.print(train_countdown)
             # Else clear the clock
             else:
                 clear_clock()
@@ -217,8 +214,8 @@ def display(times: List[datetime.datetime], min_clock_display: int = 0) -> None:
             time.sleep(0.5)
     else:
         # If there are no predicted departures, display on screen
-        with canvas(device) as draw:
-            draw.rectangle(device.bounding_box, outline="white", fill="black")
+        with canvas(screen_display) as draw:
+            draw.rectangle(screen_display.bounding_box, outline="white", fill="black")
             draw.text((5, 30), "No Predicted Arrivals", fill="white")
         # Pause for 5 seconds to not pull too often from API.  Same paus is achieved with countdown
         # clock above
@@ -227,14 +224,28 @@ def display(times: List[datetime.datetime], min_clock_display: int = 0) -> None:
 
 def main() -> None:
     # retrieve arguments
-    args = arguments()
+    script_args = arguments()
     # loop for retrieving new times and display.  Will try to adjust in the future to kill with a
     # different thread
-    for _ in range(5):
+    # setup clock display
+    i2c = board.I2C()
+    clock_display = Seg7x4(i2c)
+    clock_display.brightness = 0.4
+    # Setup screen display
+    serial = spi()
+    screen_display = sh1106(serial)
+    # get departure times
+    times = train_times(station=script_args.station, direction=script_args.direction, vehicle_type=script_args.type)
+    # display departure times and countdown on screen and clock
+    display(times, screen_display, clock_display)
+    for _ in range(10):
         # get departure times
-        times = train_times(station=args.station, direction=args.direction, vehicle_type=args.type)
+        executor = concurrent.futures.ThreadPoolExecutor()
+        future = executor.submit(train_times, script_args.station, script_args.direction, script_args.type)
         # display departure times and countdown on screen and clock
-        display(times)
+        display(times, screen_display, clock_display)
+        times = future.result()
+        executor.shutdown(wait=False)
     # clear clock when done
     clear_clock()
 
