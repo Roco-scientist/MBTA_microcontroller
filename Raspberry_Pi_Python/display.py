@@ -37,7 +37,7 @@ def arguments():
 
 def get_routes_times(api: str) -> Dict[str, datetime.datetime]:
     """
-    Retrieves the route times from the MBTA API.  Return a dictionary of times to combine scheduled
+    Retrieves the route times from the MBTA API.  Returns a dictionary of times in order to combine scheduled
     and predicted times.
     :api: website string corresponding to the MBTA API pull to get a JSON of results
     :return: dictionary with the route id as key and the time as value
@@ -157,7 +157,7 @@ def clock_countdown_time(train_times: List[datetime.datetime], min_clock_display
     train_num = 0
     next_train = train_times[train_num] - now
     # While the difference is less than the minimum, use the next train/bus
-    while (next_train.second / 60 < min_clock_display) and train_num < len(train_times):
+    while ((next_train.second / 60) < min_clock_display) and train_num < len(train_times):
         train_num += 1
         next_train = train_times[train_num] - now
     # get seconds for the display
