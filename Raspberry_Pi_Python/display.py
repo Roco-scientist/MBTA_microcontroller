@@ -45,7 +45,7 @@ def get_routes_times(api: str) -> Dict[str, datetime.datetime]:
     # Retrieve the MBTA data JSON
     api_retrieval = requests.get(api).json()
     # If there is any data proceed
-    if len(api_retrieval) > 0:
+    if len(api_retrieval) > 0 and 'data' in list(api_retrieval.keys()):
         # Pull data child node.  There are a couple of other nodes not wanted
         api_data = api_retrieval['data']
         # Create dictionary of {trip id: departure time}
