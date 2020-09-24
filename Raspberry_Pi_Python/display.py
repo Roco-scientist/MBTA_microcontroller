@@ -181,25 +181,18 @@ def clock_countdown_time(train_times: List[datetime.datetime], min_clock_display
     return None
 
 
-def display(times: List[datetime.datetime], min_clock_display: int = 0, new: bool = True) -> None:
+def display(times: List[datetime.datetime], screen_display,
+        clock_display, min_clock_display: int = 0) -> None:
     """
     Pulls in times and pushes the information to the clock and screen display
     :times: list of departure times
     :min_clock_display: the minimum difference in minutes to display on the countdown clock
     """
-    if new:
-        # setup clock display
-        i2c = board.I2C()
-        display = Seg7x4(i2c)
-        display.brightness = 0.4
-        # Setup screen display
-        serial = spi()
-        device = sh1106(serial)
     # If there are departure times, continue
     if len(times) > 0:
         # Display times on the SPI sh1106 screen
-        with canvas(device) as draw:
-            draw.rectangle(device.bounding_box, outline="white", fill="black")
+        with canvas(screen_display) as draw:
+            draw.rectangle(screen_display.bounding_box, outline="white", fill="black")
             draw.text((25, 10), "Schedule: ", fill="white")
             # For up to 3 train times, display their schedule
             for x in range(min(3, len(times))):
@@ -213,7 +206,7 @@ def display(times: List[datetime.datetime], min_clock_display: int = 0, new: boo
             train_countdown = clock_countdown_time(times, min_clock_display)
             # If a time is returned, display
             if train_countdown is not None:
-                display.print(train_countdown)
+                clock_display.print(train_countdown)
             # Else clear the clock
             else:
                 clear_clock()
@@ -221,8 +214,8 @@ def display(times: List[datetime.datetime], min_clock_display: int = 0, new: boo
             time.sleep(0.5)
     else:
         # If there are no predicted departures, display on screen
-        with canvas(device) as draw:
-            draw.rectangle(device.bounding_box, outline="white", fill="black")
+        with canvas(screen_display) as draw:
+            draw.rectangle(screen_display.bounding_box, outline="white", fill="black")
             draw.text((5, 30), "No Predicted Arrivals", fill="white")
         # Pause for 5 seconds to not pull too often from API.  Same paus is achieved with countdown
         # clock above
@@ -234,16 +227,23 @@ def main() -> None:
     script_args = arguments()
     # loop for retrieving new times and display.  Will try to adjust in the future to kill with a
     # different thread
+    # setup clock display
+    i2c = board.I2C()
+    clock_display = Seg7x4(i2c)
+    clock_display.brightness = 0.4
+    # Setup screen display
+    serial = spi()
+    screen_display = sh1106(serial)
     # get departure times
     times = train_times(station=script_args.station, direction=script_args.direction, vehicle_type=script_args.type)
     # display departure times and countdown on screen and clock
-    display(times)
+    display(times, screen_display, clock_display)
     for _ in range(10):
         # get departure times
         executor = concurrent.futures.ThreadPoolExecutor()
         future = executor.submit(train_times, script_args.station, script_args.direction, script_args.type)
         # display departure times and countdown on screen and clock
-        display(times)
+        display(times, screen_display, clock_display)
         times = future.result()
         executor.shutdown(wait=False)
     # clear clock when done
