@@ -32,8 +32,8 @@ https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack
 <tr><td>SDA</td><td>I2C SDA</td><td>3</td><td>GPIO2 (SDA)</td></tr>
 <tr><td>SCL</td><td>I2C SCL</td><td>5</td><td>GPIO3 (SCL)</td></tr>
 </table>
-<a href="https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack-python-wiring-and-setup">
-<img source="https://github.com/Roco-scientist/MBTA_microcontroller/blob/prototype/Raspberry_Pi_Python/Adafruit_056_7_segment_backpack.png">
+<a href="https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack-python-wiring-and-setup" target="_blank">
+<img source="https://github.com/Roco-scientist/MBTA_microcontroller/blob/master/Raspberry_Pi_Python/Adafruit_056_7_segment_backpack.png?raw=true">
 </a>
 
 ## How to run
