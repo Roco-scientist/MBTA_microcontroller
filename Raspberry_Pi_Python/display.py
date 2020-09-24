@@ -36,43 +36,79 @@ def arguments():
 
 
 def get_routes_times(api: str) -> Dict[str, datetime.datetime]:
+    """
+    Retrieves the route times from the MBTA API.  Return a dictionary of times to combine scheduled
+    and predicted times.
+    :api: website string corresponding to the MBTA API pull to get a JSON of results
+    :return: dictionary with the route id as key and the time as value
+    """
+    # Retrieve the MBTA data JSON
     api_retrieval = requests.get(api).json()
+    # If there is any data proceed
     if len(api_retrieval) > 0:
+        # Pull data child node.  There are a couple of other nodes not wanted
         api_data = api_retrieval['data']
-        commuter_rail_dep_time = {data['relationships']['trip']['data']['id']:
-                datetime.datetime.fromisoformat(data['attributes']['departure_time'].replace("-04:00", "")) 
-                for data in api_data}
-    #    commuter_rail_times = [datetime.datetime.fromisoformat(dtime.replace("-04:00", "")) 
-    #                           for dtime in commuter_rail_dep_time]
-    #    commuter_rail_times.sort()
+        # Create dictionary of {trip id: departure time}
+        commuter_rail_dep_time = {}
+        # Iterate through routes
+        for data in api_data:
+            # Pull the departure time and remove the timezone information
+            departure_time = data['attributes']['departure_time'].replace("-04:00", "") 
+            # Convert to datetime.datetime
+            departure_time_datetime = datetime.datetime.fromisoformat(departure_time)
+            # Pull the trip id
+            trip_id = data['relationships']['trip']['data']['id']
+            # Add to dictionary
+            commuter_rail_dep_time[trip_id] = departure_time_datetime
         return commuter_rail_dep_time
+    # return empty dictionary if there is no data.  This is common with predictions if there isn't
+    # one soon enough
     return dict()
 
 
 def get_scheduled_times(station: str, dir_code: str, vehicle_type: str) -> Dict[str, datetime.datetime]:
     """
-    TODO Fille this
+    Creates the API for MBTA scheduled times
+    :station: station of interest
+    :dir_code: dir code for MBTA API. 0 for outbound, 1 for inbound
+    :vehicle_type: subway, bus, commuter rail.  Not yet integrated
+    :return: dictionary of {trip id: departure time}
     """
+    # Now in datetime format to pull only later schedules.  Not working.  Need to fix
     now = datetime.datetime.now()
+    # The MBTA schedules api with variable added
     schedules_api = \
     f"https://api-v3.mbta.com/schedules?include=route,trip,stop&filter[min_time]={now.hour}%3A{now.minute}&filter[stop]=place-{station}&filter[route]=CR-Needham&filter[direction_id]={dir_code}"
+    # Gets the route times dictionary
     scheduled_times = get_routes_times(schedules_api)
     return scheduled_times
 
 
 def get_prediction_times(station: str, dir_code: str, vehicle_type: str) -> Dict[str, datetime.datetime]:
     """
-    TODO Fill this
+    Creates the API for MBTA prediction times. If the pull happens outside of prediction windows, an
+    empty dictionary is returned
+    :station: station of interest
+    :dir_code: dir code for MBTA API. 0 for outbound, 1 for inbound
+    :vehicle_type: subway, bus, commuter rail.  Not yet integrated
+    :return: dictionary of {trip id: departure time}
     """
+    # The MBTA prediction api with variables added
     predictions_api = \
     f"https://api-v3.mbta.com/predictions?filter[stop]=place-{station}&filter[direction_id]={dir_code}&include=stop&filter[route]=CR-Needham"
+    # Gets the route times dictionary.  May be empty if there isn't one departing soon enough
     prediction_times = get_routes_times(predictions_api)
     return prediction_times
 
 
 def train_times(station: str, direction: str, vehicle_type: str) -> List[datetime.datetime]:
     """
-    TODO: Fill this
+    Retrieves the departure times of the wanted MBTA vehicle. Also replaces scheduled times with
+    prediction times, if they exists.
+    :station: desired station abbreviation.  Can be found within the HTML website at MBTA
+    :direction: inbound or outbound
+    :vehicle_type: subway, bus, commuter rail.  Not yet integrated
+    :return:
     """
     if direction == 'inbound':
         dir_code = 1
