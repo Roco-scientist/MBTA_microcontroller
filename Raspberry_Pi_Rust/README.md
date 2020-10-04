@@ -15,7 +15,10 @@ Raspberry pi 2/3/4: <br>
 <li>Pi 2/3/4: AArch32 target with hard float (arm-none-linux-gnueabihf)</li>
 </ul>
 Add to PATH<br>
+
+`export PATH="$HOME/PATH_TO_YOUR_DOWNLOAD/PATH_TO_TOOLCHAIN_FOLDER/bin:$PATH"`
 <br>
+
 ## Run remotely
 Create a bash script with below or export environmental variables
 ```
