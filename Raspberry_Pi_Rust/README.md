@@ -2,6 +2,7 @@
 ## Requirements
 ### Standard library for cross compiling
 Raspberry pi 0/1:</br>
+`rustup target add arm-unknown-linux-musleabi`
 `rustup target add arm-unknown-linux-gnueabihf`
 <br>
 <br>
