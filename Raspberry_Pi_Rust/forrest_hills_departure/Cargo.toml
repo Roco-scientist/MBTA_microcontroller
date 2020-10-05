@@ -8,5 +8,8 @@ edition = "2018"
 
 [dependencies]
 sh1106 = "0.3.3"
-rppal = "0.11.3"
-embedded_graphics = "0.6.2"
+embedded-graphics = "0.6.2"
+
+[dependencies.rppal]
+version = "0.11.3"
+features = ["hal-unproven"]
