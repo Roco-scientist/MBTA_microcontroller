@@ -31,7 +31,7 @@ fn main() {
     screen_display.flush().unwrap();
     let text_style = TextStyleBuilder::new(Font6x8).build();
 
-    Text::new("Hello Rust!", Point::new(20, 30))
+    Text::new("Hello Rust!", Point::new(1, 1))
         .into_styled(text_style)
         .draw(&mut screen_display)
         .unwrap();
