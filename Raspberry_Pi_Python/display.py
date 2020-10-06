@@ -172,9 +172,9 @@ def clock_countdown_time(train_times: List[datetime.datetime], min_clock_display
     # make sure it is 0 padded
     next_train_minutes = str(int(next_train_minutes))
     if len(next_train_minutes) == 1:
-        next_train_minutes = f"0{next_train_seconds}"
+        next_train_minutes = f"0{next_train_minutes}"
     # If minutes are not a length of 3 (too large for display)
-    if len(next_train_minutes) == 2 and int(next_train_minutes) > min_clock_display:
+    if len(next_train_minutes) == 2 and (next_train.seconds/60) > min_clock_display:
         # Return the display text
         return f"{next_train_minutes}:{next_train_seconds}"
     # Else return None
@@ -238,7 +238,7 @@ def main() -> None:
     times = train_times(station=script_args.station, direction=script_args.direction, vehicle_type=script_args.type)
     # display departure times and countdown on screen and clock
     display(times, screen_display, clock_display)
-    for _ in range(10):
+    for _ in range(20):
         # get departure times
         executor = concurrent.futures.ThreadPoolExecutor()
         future = executor.submit(train_times, script_args.station, script_args.direction, script_args.type)
