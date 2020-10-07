@@ -8,7 +8,8 @@ extern crate std;
 use embedded_graphics::prelude::*;
 use embedded_graphics::{
     fonts::{Font6x8, Text},
-    style::TextStyleBuilder,
+    style::{TextStyleBuilder, TextStyle},
+    pixelcolor::BinaryColor,
 };
 use rppal::{gpio, spi};
 use sh1106::{mode::GraphicsMode, Builder};
