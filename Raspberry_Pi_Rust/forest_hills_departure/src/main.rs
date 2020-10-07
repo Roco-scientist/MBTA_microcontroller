@@ -14,9 +14,7 @@ use embedded_graphics::{
 };
 use rppal::{gpio, spi};
 use sh1106;
-use sh1106::mode::GraphicsMode;
 use ssd1306;
-use ssd1306::mode::GraphicsMode;
 use std::{thread, time};
 
 fn main() {
@@ -30,7 +28,7 @@ fn main() {
     let spi_gpio = gpio::Gpio::new().unwrap();
     let spi_dc = spi_gpio.get(24).unwrap().into_output();
     let spi_cs = spi_gpio.get(8).unwrap().into_output();
-    let mut screen_display_sh1106: GraphicsMode<_> = sh1106::Builder::new()
+    let mut screen_display_sh1106: sh1106::mode::graphics::GraphicsMode<_> = sh1106::Builder::new()
         .connect_spi(spi0, spi_dc, spi_cs)
         .into();
     screen_display_sh1106.init().unwrap();
@@ -47,9 +45,10 @@ fn main() {
     thread::sleep(time::Duration::from_secs(1));
     screen_display_sh1106.flush().unwrap();
 
-    let mut screen_display_ssd1306: GraphicsMode<_> = ssd1306::Builder::new()
-        .connect_spi(spi0, spi_dc, spi_cs)
-        .into();
+    let interface = ssd1306::prelude::SPIInterface(spi0, spi_dc, spi_cs);
+    let mut screen_display_ssd1306: ssd1306::mode::graphics::GraphicsMode<_> =
+        ssd1306::Builder::new().connect(interface).into();
+    screen_display_ssd1306.set_pixel(15, 15, 1u8);
     screen_display_ssd1306.init().unwrap();
     screen_display_ssd1306.flush().unwrap();
     let text_style = TextStyleBuilder::new(Font6x8).build();
