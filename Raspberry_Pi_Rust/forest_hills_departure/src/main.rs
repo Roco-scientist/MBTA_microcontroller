@@ -16,31 +16,31 @@ use rppal::{gpio, spi};
 use std::{thread, time};
 
 fn main() {
-    let spi0 = spi::Spi::new(
-        spi::Bus::Spi0,
-        spi::SlaveSelect::Ss0,
-        400_000,
-        spi::Mode::Mode0,
-    )
-    .unwrap();
-    let spi_gpio = gpio::Gpio::new().unwrap();
-    let spi_dc = spi_gpio.get(24).unwrap().into_output();
-    let spi_cs = spi_gpio.get(8).unwrap().into_output();
-    let mut screen_display_sh1106: sh1106::mode::graphics::GraphicsMode<_> = sh1106::Builder::new()
-        .connect_spi(spi0, spi_dc, spi_cs)
-        .into();
-    screen_display_sh1106.init().unwrap();
-    screen_display_sh1106.flush().unwrap();
-    screen_display_sh1106.set_pixel(10, 10, 1u8);
-
-    Text::new("sh1106", Point::new(20, 30))
-        .into_styled(TextStyle::new(Font6x8, BinaryColor::On))
-        .draw(&mut screen_display_sh1106)
-        .unwrap();
+    //    let spi0 = spi::Spi::new(
+    //        spi::Bus::Spi0,
+    //        spi::SlaveSelect::Ss0,
+    //        400_000,
+    //        spi::Mode::Mode0,
+    //    )
+    //    .unwrap();
+    //    let spi_gpio = gpio::Gpio::new().unwrap();
+    //    let spi_dc = spi_gpio.get(24).unwrap().into_output();
+    //    let spi_cs = spi_gpio.get(8).unwrap().into_output();
+    //    let mut screen_display_sh1106: sh1106::mode::graphics::GraphicsMode<_> = sh1106::Builder::new()
+    //        .connect_spi(spi0, spi_dc, spi_cs)
+    //        .into();
+    //    screen_display_sh1106.init().unwrap();
+    //    screen_display_sh1106.flush().unwrap();
+    //    screen_display_sh1106.set_pixel(10, 10, 1u8);
+    //
+    //    Text::new("sh1106", Point::new(20, 30))
+    //        .into_styled(TextStyle::new(Font6x8, BinaryColor::On))
+    //        .draw(&mut screen_display_sh1106)
+    //        .unwrap();
 
     //    screen_display.draw(Font6x8::clone_into("Hello world!", 1u8.into()).into_iter());
-    thread::sleep(time::Duration::from_secs(1));
-    screen_display_sh1106.flush().unwrap();
+    //   thread::sleep(time::Duration::from_secs(1));
+    //    screen_display_sh1106.flush().unwrap();
 
     let spi0_2 = spi::Spi::new(
         spi::Bus::Spi0,
