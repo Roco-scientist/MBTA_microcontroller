@@ -42,7 +42,16 @@ fn main() {
     thread::sleep(time::Duration::from_secs(1));
     screen_display_sh1106.flush().unwrap();
 
-    let interface = ssd1306::prelude::SPIInterface::new(spi0, spi_dc, spi_cs);
+    let spi0_2 = spi::Spi::new(
+        spi::Bus::Spi0,
+        spi::SlaveSelect::Ss0,
+        400_000,
+        spi::Mode::Mode0,
+    )
+    .unwrap();
+    let spi_dc_2 = spi_gpio.get(24).unwrap().into_output();
+    let spi_cs_2 = spi_gpio.get(8).unwrap().into_output();
+    let interface = ssd1306::prelude::SPIInterface::new(spi0_2, spi_dc_2, spi_cs_2);
     let mut screen_display_ssd1306: ssd1306::mode::graphics::GraphicsMode<_> =
         ssd1306::Builder::new().connect(interface).into();
     screen_display_ssd1306.set_pixel(15, 15, 1u8);
