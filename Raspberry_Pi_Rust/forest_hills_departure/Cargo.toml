@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 sh1106 = "0.3.3"
 embedded-graphics = "0.6.2"
+ssd1306 = "0.4.0"
 
 [dependencies.rppal]
 version = "0.11.3"
