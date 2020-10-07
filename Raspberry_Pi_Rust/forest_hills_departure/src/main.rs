@@ -31,7 +31,6 @@ fn main() {
         .into();
     screen_display_sh1106.init().unwrap();
     screen_display_sh1106.flush().unwrap();
-    let text_style = TextStyleBuilder::new(Font6x8).build();
     screen_display_sh1106.set_pixel(10, 10, 1u8);
 
     Text::new("sh1106", Point::new(20, 30))
@@ -49,7 +48,6 @@ fn main() {
     screen_display_ssd1306.set_pixel(15, 15, 1u8);
     screen_display_ssd1306.init().unwrap();
     screen_display_ssd1306.flush().unwrap();
-    let text_style = TextStyleBuilder::new(Font6x8).build();
     screen_display_ssd1306.set_pixel(10, 10, 1u8);
 
     Text::new("ssd1306", Point::new(20, 30))
