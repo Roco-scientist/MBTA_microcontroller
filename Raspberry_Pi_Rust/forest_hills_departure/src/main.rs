@@ -54,6 +54,7 @@ fn main() {
     let interface = ssd1306::prelude::SPIInterface::new(spi0_2, spi_dc_2, spi_cs_2);
     let mut screen_display_ssd1306: ssd1306::mode::graphics::GraphicsMode<_> =
         ssd1306::Builder::new().connect(interface).into();
+    screen_display_ssd1306.display_on(true).unwrap();
     screen_display_ssd1306.set_pixel(15, 15, 1u8);
     screen_display_ssd1306.init().unwrap();
     screen_display_ssd1306.flush().unwrap();
