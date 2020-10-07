@@ -23,7 +23,7 @@ fn main() {
     //        spi::Mode::Mode0,
     //    )
     //    .unwrap();
-    //    let spi_gpio = gpio::Gpio::new().unwrap();
+    let spi_gpio = gpio::Gpio::new().unwrap();
     //    let spi_dc = spi_gpio.get(24).unwrap().into_output();
     //    let spi_cs = spi_gpio.get(8).unwrap().into_output();
     //    let mut screen_display_sh1106: sh1106::mode::graphics::GraphicsMode<_> = sh1106::Builder::new()
