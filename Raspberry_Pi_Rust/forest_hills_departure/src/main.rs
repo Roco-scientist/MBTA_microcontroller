@@ -30,9 +30,10 @@ fn main() {
     screen_display.init().unwrap();
     screen_display.flush().unwrap();
     let text_style = TextStyleBuilder::new(Font6x8).build();
+    screen_display.set_pixel(10, 10, 1u8);
 
-    Text::new("Hello Rust!", Point::new(1, 1))
-        .into_styled(text_style)
+    Text::new("Hello Rust!", Point::new(20, 30))
+        .into_styled(TextStyle::new(Font6x8, BinaryColor::On))
         .draw(&mut screen_display)
         .unwrap();
 
