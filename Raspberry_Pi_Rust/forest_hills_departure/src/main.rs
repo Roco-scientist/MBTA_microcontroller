@@ -13,8 +13,6 @@ use embedded_graphics::{
     style::{TextStyle, TextStyleBuilder},
 };
 use rppal::{gpio, spi};
-use sh1106;
-use ssd1306;
 use std::{thread, time};
 
 fn main() {
@@ -45,7 +43,7 @@ fn main() {
     thread::sleep(time::Duration::from_secs(1));
     screen_display_sh1106.flush().unwrap();
 
-    let interface = ssd1306::prelude::SPIInterface(spi0, spi_dc, spi_cs);
+    let interface = ssd1306::prelude::SPIInterface::new(spi0, spi_dc, spi_cs);
     let mut screen_display_ssd1306: ssd1306::mode::graphics::GraphicsMode<_> =
         ssd1306::Builder::new().connect(interface).into();
     screen_display_ssd1306.set_pixel(15, 15, 1u8);
