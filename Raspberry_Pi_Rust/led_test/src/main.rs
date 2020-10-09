@@ -8,7 +8,7 @@ use rppal::gpio::Gpio;
 
 fn main() {
     let gpio = Gpio::new().unwrap();
-    let mut pin = gpio.get(37).unwrap().into_output();
+    let mut pin = gpio.get(26).unwrap().into_output();
 
     pin.set_high();
     thread::sleep(Duration::from_secs(1));
