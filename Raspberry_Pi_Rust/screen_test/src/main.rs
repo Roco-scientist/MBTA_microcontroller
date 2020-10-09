@@ -31,7 +31,7 @@ fn main() {
         Builder::new().connect_spi(spi0, spi_dc, spi_cs).into();
     screen_display_sh1106.init().unwrap();
     screen_display_sh1106.flush().unwrap();
-    let im: ImageRawLE<BinaryColor> = ImageRawLE::new(include_bytes!("./rust.raw"), 64, 64);
+    let im: ImageRawLE<BinaryColor> = ImageRawLE::new(include_bytes!("../rust.raw"), 64, 64);
     Image::new(&im, Point::new(32, 0))
         .draw(&mut screen_display_sh1106)
         .unwrap();
@@ -46,7 +46,7 @@ fn main() {
         .unwrap();
     screen_display_sh1106.flush().unwrap();
     thread::sleep(time::Duration::from_secs(1));
-    screen_display.draw(Font6x8::clone_into("Hello world!", 1u8.into()).into_iter());
-    screen_display_sh1106.flush().unwrap();
-    thread::sleep(time::Duration::from_secs(1));
+//    screen_display_sh1106.draw(Font6x8::clone_into("Hello world!", 1u8.into()).into_iter());
+//    screen_display_sh1106.flush().unwrap();
+//    thread::sleep(time::Duration::from_secs(1));
 }
