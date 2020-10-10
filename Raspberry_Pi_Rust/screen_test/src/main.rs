@@ -32,13 +32,14 @@ fn main() {
     screen_display_sh1106.init().unwrap();
     screen_display_sh1106.flush().unwrap();
     let im: ImageRawLE<BinaryColor> = ImageRawLE::new(include_bytes!("../rust.raw"), 64, 64);
-    Image::new(&im, Point::new(32, 0))
+    let im_image = Image::new(&im, Point::new(32, 0));
+    im_image
         .draw(&mut screen_display_sh1106)
         .unwrap();
     screen_display_sh1106.flush().unwrap();
     thread::sleep(time::Duration::from_secs(1));
     screen_display_sh1106.set_contrast(5u8).unwrap();
-    screen_display_sh1106.draw_image(&im).unwrap();
+    screen_display_sh1106.draw_image(&im_image).unwrap();
     screen_display_sh1106.flush().unwrap();
     thread::sleep(time::Duration::from_secs(1));
     screen_display_sh1106.set_pixel(10, 10, 1u8);
