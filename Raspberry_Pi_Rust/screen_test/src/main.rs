@@ -37,6 +37,10 @@ fn main() {
         .unwrap();
     screen_display_sh1106.flush().unwrap();
     thread::sleep(time::Duration::from_secs(1));
+    screen_display_sh1106.set_contrast(5u8).unwrap();
+    screen_display_sh1106.draw_image(&im).unwrap();
+    screen_display_sh1106.flush().unwrap();
+    thread::sleep(time::Duration::from_secs(1));
     screen_display_sh1106.set_pixel(10, 10, 1u8);
     screen_display_sh1106.flush().unwrap();
     thread::sleep(time::Duration::from_secs(1));
@@ -46,7 +50,7 @@ fn main() {
         .unwrap();
     screen_display_sh1106.flush().unwrap();
     thread::sleep(time::Duration::from_secs(1));
-//    screen_display_sh1106.draw(Font6x8::clone_into("Hello world!", 1u8.into()).into_iter());
-//    screen_display_sh1106.flush().unwrap();
-//    thread::sleep(time::Duration::from_secs(1));
+    //    screen_display_sh1106.draw(Font6x8::clone_into("Hello world!", 1u8.into()).into_iter());
+    //    screen_display_sh1106.flush().unwrap();
+    //    thread::sleep(time::Duration::from_secs(1));
 }
