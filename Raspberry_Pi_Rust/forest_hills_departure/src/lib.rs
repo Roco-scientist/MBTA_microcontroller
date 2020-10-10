@@ -1,3 +1,4 @@
+extern crate chrono;
 extern crate ht16k33;
 extern crate rppal;
 extern crate std;
@@ -15,7 +16,10 @@ pub fn initialize_display() -> Result<ht16k33::HT16K33<I2c>> {
     return Ok(clock);
 }
 
-pub fn display_time(time: str, display: &mut ht16k33::HT16K33<I2c>) -> () {
+pub fn display_time(train_time: chrono::DateTime, display: &mut ht16k33::HT16K33<I2c>) -> () {
+    let now = chrono::Utc::now();
+    let diff = now.signed_duration_since(train_time);
+    println!("{:?}", diff);
     display_num(0u8, 6u8, &mut display, true);
     thread::sleep(time::Duration::from_secs(2));
     display_num(0u8, 6u8, &mut display, false);
