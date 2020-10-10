@@ -14,6 +14,11 @@ fn main() {
     let address = 112u8; // actually 0x70 in hexidecimal which goes to 112
     let mut clock = ht16k33::HT16K33::new(i2c, address);
     let led_location = ht16k33::LedLocation::new(0, *number_conversion.get(&1).unwrap()).unwrap();
+    clock.initialize().unwrap();
+    clock.set_display(ht16k33::Display::ON).unwrap();
+    clock
+        .set_dimming(ht16k33::Dimming::from_u8(7u8).unwrap())
+        .unwrap();
     clock.set_led(led_location, true).unwrap();
     thread::sleep(time::Duration::from_secs(2));
 }
