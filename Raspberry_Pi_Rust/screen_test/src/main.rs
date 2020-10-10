@@ -21,25 +21,24 @@ fn main() {
     let spi0 = spi::Spi::new(
         spi::Bus::Spi0,
         spi::SlaveSelect::Ss0,
-        400_000,
+        20_000,
         spi::Mode::Mode0,
     )
     .unwrap();
     let spi_dc = spi_gpio.get(24).unwrap().into_output();
     let spi_cs = spi_gpio.get(8).unwrap().into_output();
+    let mut spi_reset = spi_gpio.get(25).unwrap().into_output();
     let mut screen_display_sh1106: GraphicsMode<_> =
         Builder::new().connect_spi(spi0, spi_dc, spi_cs).into();
     screen_display_sh1106.init().unwrap();
+    screen_display_sh1106.reset(
+        &mut spi_reset,
+        embedded_hal::blocking::delay::DelayMs::delay_ms(100),
+    );
     screen_display_sh1106.flush().unwrap();
     let im: ImageRawLE<BinaryColor> = ImageRawLE::new(include_bytes!("../rust.raw"), 64, 64);
     let im_image = Image::new(&im, Point::new(32, 0));
-    im_image
-        .draw(&mut screen_display_sh1106)
-        .unwrap();
-    screen_display_sh1106.flush().unwrap();
-    thread::sleep(time::Duration::from_secs(1));
-    screen_display_sh1106.set_contrast(5u8).unwrap();
-    screen_display_sh1106.draw_image(&im_image).unwrap();
+    im_image.draw(&mut screen_display_sh1106).unwrap();
     screen_display_sh1106.flush().unwrap();
     thread::sleep(time::Duration::from_secs(1));
     screen_display_sh1106.set_pixel(10, 10, 1u8);
@@ -51,7 +50,4 @@ fn main() {
         .unwrap();
     screen_display_sh1106.flush().unwrap();
     thread::sleep(time::Duration::from_secs(1));
-    //    screen_display_sh1106.draw(Font6x8::clone_into("Hello world!", 1u8.into()).into_iter());
-    //    screen_display_sh1106.flush().unwrap();
-    //    thread::sleep(time::Duration::from_secs(1));
 }
