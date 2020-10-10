@@ -3,10 +3,11 @@ extern crate ht16k33;
 extern crate rppal;
 extern crate std;
 
+use chrono::prelude::*;
 use rppal::i2c::I2c;
 use std::{collections::HashMap, thread, time};
 
-pub fn initialize_display() -> Result<ht16k33::HT16K33<I2c>, std::error::Error> {
+pub fn initialize_display() -> Result<ht16k33::HT16K33<I2c>, Box<dyn std::error::Error>> {
     let i2c = I2c::new()?;
     let address = 112u8; // actually 0x70 in hexidecimal which goes to 112
     let mut clock = ht16k33::HT16K33::new(i2c, address);
