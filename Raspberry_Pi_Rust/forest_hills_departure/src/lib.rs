@@ -6,7 +6,7 @@ extern crate std;
 use rppal::i2c::I2c;
 use std::{collections::HashMap, thread, time};
 
-pub fn initialize_display() -> Result<ht16k33::HT16K33<I2c>> {
+pub fn initialize_display() -> Result<ht16k33::HT16K33<I2c>, std::error::Error> {
     let i2c = I2c::new()?;
     let address = 112u8; // actually 0x70 in hexidecimal which goes to 112
     let mut clock = ht16k33::HT16K33::new(i2c, address);
@@ -16,7 +16,7 @@ pub fn initialize_display() -> Result<ht16k33::HT16K33<I2c>> {
     return Ok(clock);
 }
 
-pub fn display_time(train_time: chrono::DateTime, display: &mut ht16k33::HT16K33<I2c>) -> () {
+pub fn display_time(train_time: chrono::DateTime<Utc>, display: &mut ht16k33::HT16K33<I2c>) -> () {
     let now = chrono::Utc::now();
     let diff = now.signed_duration_since(train_time);
     println!("{:?}", diff);
