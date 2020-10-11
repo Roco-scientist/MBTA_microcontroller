@@ -52,7 +52,7 @@ impl ClockDisplay {
             self.display_num(8u8, fourth, true);
         }
         println!("{:?}:{:?}", minutes, seconds);
-        println!("{:?}:{:?}", diff);
+        println!("{:?}", diff);
         thread::sleep(time::Duration::from_secs(2));
         self.display.clear_display_buffer();
         self.display.write_display_buffer().unwrap();
@@ -93,10 +93,10 @@ impl ClockDisplay {
     }
 
     fn display_colon(&mut self, on: bool) -> () {
-        let leds = [0u8, 1u8];
+        let leds = vec![0u8, 1u8];
         // Turn on/off each led
         for led in leds {
-            let led_location = ht16k33::LedLocation::new(4u8, *led).unwrap();
+            let led_location = ht16k33::LedLocation::new(4u8, led).unwrap();
             self.display.set_led(led_location, on).unwrap();
         }
     }
