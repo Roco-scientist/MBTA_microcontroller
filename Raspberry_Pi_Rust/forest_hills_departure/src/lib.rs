@@ -1,5 +1,6 @@
 extern crate chrono;
 extern crate ht16k33;
+extern crate lazy_static;
 extern crate rppal;
 extern crate std;
 
@@ -14,21 +15,23 @@ use std::{collections::HashMap, thread, time};
 ///
 ///  Create a hashmap below with each number and the corresponding leds that need to be
 ///  turned on
-const NUMBER_LEDS: HashMap<u8, Vec<u8>> = [
-    (0u8, vec![0u8, 1u8, 2u8, 3u8, 4u8, 5u8]),
-    (1u8, vec![1u8, 2u8]),
-    (2u8, vec![0u8, 1u8, 3u8, 4u8, 6u8]),
-    (3u8, vec![0u8, 1u8, 2u8, 3u8, 6u8]),
-    (4u8, vec![1u8, 2u8, 5u8, 6u8]),
-    (5u8, vec![0u8, 2u8, 3u8, 5u8, 6u8]),
-    (6u8, vec![0u8, 2u8, 3u8, 4u8, 5u8, 6u8]),
-    (7u8, vec![0u8, 1u8, 2u8]),
-    (8u8, vec![0u8, 1u8, 2u8, 3u8, 4u8, 5u8, 6u8]),
-    (9u8, vec![0u8, 1u8, 2u8, 3u8, 5u8, 6u8]),
-]
-.iter()
-.cloned()
-.collect();
+lazy_static! {
+    static ref NUMBER_LEDS: HashMap<u8, Vec<u8>> = [
+        (0u8, vec![0u8, 1u8, 2u8, 3u8, 4u8, 5u8]),
+        (1u8, vec![1u8, 2u8]),
+        (2u8, vec![0u8, 1u8, 3u8, 4u8, 6u8]),
+        (3u8, vec![0u8, 1u8, 2u8, 3u8, 6u8]),
+        (4u8, vec![1u8, 2u8, 5u8, 6u8]),
+        (5u8, vec![0u8, 2u8, 3u8, 5u8, 6u8]),
+        (6u8, vec![0u8, 2u8, 3u8, 4u8, 5u8, 6u8]),
+        (7u8, vec![0u8, 1u8, 2u8]),
+        (8u8, vec![0u8, 1u8, 2u8, 3u8, 4u8, 5u8, 6u8]),
+        (9u8, vec![0u8, 1u8, 2u8, 3u8, 5u8, 6u8]),
+    ]
+    .iter()
+    .cloned()
+    .collect();
+}
 
 pub struct ClockDisplay {
     display: ht16k33::HT16K33<I2c>,
@@ -132,13 +135,13 @@ impl ClockDisplay {
     fn display_nums(&mut self) -> () {
         // Retrieve a vec! of leds that need to be turned on for the numbers
         // Then turn them on
-        let mut leds = NUMBER_LEDS.get(&self.minutes_ten.unwrap()).unwrap();
+        let leds = NUMBER_LEDS.get(&self.minutes_ten.unwrap()).unwrap();
         self.turn_on_leds(leds, 0);
-        let mut leds = NUMBER_LEDS.get(&self.minutes_single.unwrap()).unwrap();
+        let leds = NUMBER_LEDS.get(&self.minutes_single.unwrap()).unwrap();
         self.turn_on_leds(leds, 2);
-        let mut leds = NUMBER_LEDS.get(&self.seconds_ten.unwrap()).unwrap();
+        let leds = NUMBER_LEDS.get(&self.seconds_ten.unwrap()).unwrap();
         self.turn_on_leds(leds, 6);
-        let mut leds = NUMBER_LEDS.get(&self.seconds_single.unwrap()).unwrap();
+        let leds = NUMBER_LEDS.get(&self.seconds_single.unwrap()).unwrap();
         self.turn_on_leds(leds, 8);
         self.display_colon(true);
     }
@@ -163,10 +166,11 @@ impl ClockDisplay {
 
     fn change_number(&mut self, location: u8, new_number: &u8) {
         let old_number = match location {
-            0 => &self.minutes_ten.unwrap(),
-            2 => &self.minutes_single.unwrap(),
-            6 => &self.seconds_ten.unwrap(),
-            8 => &self.seconds_single.unwrap(),
+            0u8 => &self.minutes_ten.unwrap(),
+            2u8 => &self.minutes_single.unwrap(),
+            6u8 => &self.seconds_ten.unwrap(),
+            8u8 => &self.seconds_single.unwrap(),
+            _ => panic!("location not recognized"),
         };
         let old_leds = NUMBER_LEDS.get(old_number).unwrap();
         let new_leds = NUMBER_LEDS.get(new_number).unwrap();
