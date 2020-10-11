@@ -1,5 +1,6 @@
 extern crate chrono;
 extern crate ht16k33;
+#[macro_use]
 extern crate lazy_static;
 extern crate rppal;
 extern crate std;
@@ -8,14 +9,14 @@ use chrono::prelude::*;
 use rppal::i2c::I2c;
 use std::{collections::HashMap, thread, time};
 
-/// Below are the led numbers for each number within the clock
-///   _   0
-///  |_|  5, 6, 1
-///  |_|  4, 3, 2
-///
-///  Create a hashmap below with each number and the corresponding leds that need to be
-///  turned on
 lazy_static! {
+// Below are the led numbers for each number within the clock
+//   _   0
+//  |_|  5, 6, 1
+//  |_|  4, 3, 2
+//
+//  Create a hashmap below with each number and the corresponding leds that need to be
+//  turned on
     static ref NUMBER_LEDS: HashMap<u8, Vec<u8>> = [
         (0u8, vec![0u8, 1u8, 2u8, 3u8, 4u8, 5u8]),
         (1u8, vec![1u8, 2u8]),
@@ -124,8 +125,6 @@ impl ClockDisplay {
             println!("{:?}:{:?}", minutes, seconds);
             println!("{:?}", diff);
             thread::sleep(time::Duration::from_secs(1));
-            self.display.clear_display_buffer();
-            self.display.write_display_buffer().unwrap();
         }
         self.display.clear_display_buffer();
         self.display.write_display_buffer().unwrap();
@@ -166,13 +165,13 @@ impl ClockDisplay {
 
     fn change_number(&mut self, location: u8, new_number: &u8) {
         let old_number = match location {
-            0u8 => &self.minutes_ten.unwrap(),
-            2u8 => &self.minutes_single.unwrap(),
-            6u8 => &self.seconds_ten.unwrap(),
-            8u8 => &self.seconds_single.unwrap(),
+            0u8 => self.minutes_ten.unwrap().clone(),
+            2u8 => self.minutes_single.unwrap().clone(),
+            6u8 => self.seconds_ten.unwrap().clone(),
+            8u8 => self.seconds_single.unwrap().clone(),
             _ => panic!("location not recognized"),
         };
-        let old_leds = NUMBER_LEDS.get(old_number).unwrap();
+        let old_leds = NUMBER_LEDS.get(&old_number).unwrap();
         let new_leds = NUMBER_LEDS.get(new_number).unwrap();
         let leds_off = old_leds.iter().filter(|led| !new_leds.contains(led));
         let leds_on = new_leds.iter().filter(|led| !old_leds.contains(led));
