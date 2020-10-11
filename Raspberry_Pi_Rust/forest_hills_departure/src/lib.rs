@@ -33,29 +33,31 @@ impl ClockDisplay {
 
     /// Dispalys the minutes:seconds until the next train on the clock display
     pub fn display_time_until(&mut self, train_time: chrono::DateTime<Utc>) -> () {
-        // get now time in UTC
-        let now = chrono::Utc::now();
-        // get the difference between now and the train time
-        let diff = train_time.signed_duration_since(now);
-        // separate out minutes and seconds for the display
-        let minutes = diff.num_minutes() as u8;
-        let seconds = diff.num_seconds() as u8;
-        if minutes < 100u8 {
-            let first = minutes / 10u8;
-            let second = minutes % 10u8;
-            let third = seconds / 10u8;
-            let fourth = seconds % 10u8;
-            self.display_num(0u8, first, true);
-            self.display_num(2u8, second, true);
-            self.display_colon(true);
-            self.display_num(6u8, third, true);
-            self.display_num(8u8, fourth, true);
+        for _ in 0..5 {
+            // get now time in UTC
+            let now = chrono::Utc::now();
+            // get the difference between now and the train time
+            let diff = train_time.signed_duration_since(now);
+            // separate out minutes and seconds for the display
+            let minutes = diff.num_minutes() as u8;
+            let seconds = diff.num_seconds() as u8;
+            if minutes < 100u8 {
+                let first = minutes / 10u8;
+                let second = minutes % 10u8;
+                let third = seconds / 10u8;
+                let fourth = seconds % 10u8;
+                self.display_num(0u8, first, true);
+                self.display_num(2u8, second, true);
+                self.display_colon(true);
+                self.display_num(6u8, third, true);
+                self.display_num(8u8, fourth, true);
+            }
+            println!("{:?}:{:?}", minutes, seconds);
+            println!("{:?}", diff);
+            thread::sleep(time::Duration::from_secs(1));
+            self.display.clear_display_buffer();
+            self.display.write_display_buffer().unwrap();
         }
-        println!("{:?}:{:?}", minutes, seconds);
-        println!("{:?}", diff);
-        thread::sleep(time::Duration::from_secs(2));
-        self.display.clear_display_buffer();
-        self.display.write_display_buffer().unwrap();
     }
 
     /// Turns on the necessary leds for a number at the indicated location
