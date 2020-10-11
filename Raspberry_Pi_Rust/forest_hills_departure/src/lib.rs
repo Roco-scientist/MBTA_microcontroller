@@ -74,10 +74,11 @@ impl ClockDisplay {
             let diff = train_time.signed_duration_since(now);
             // separate out minutes and seconds for the display
             // if minutes are above 250, reduce so it can be a u8
+            let minutes;
             if diff.num_minutes() < 250i64 {
-                let minutes = diff.num_minutes() as u8;
+                minutes = diff.num_minutes() as u8;
             } else {
-                let minutes = 250u8;
+                minutes = 250u8;
             }
             let seconds = (diff.num_seconds() % 60i64) as u8;
             if minutes < 100u8 {
@@ -86,27 +87,27 @@ impl ClockDisplay {
                 let third = seconds / 10u8;
                 let fourth = seconds % 10u8;
                 if self.minutes_ten.is_none() {
-                    self.minutes_ten = first;
-                    self.minutes_single = second;
-                    self.seconds_ten = third;
-                    self.seconds_single = fourth;
+                    self.minutes_ten = Some(first);
+                    self.minutes_single = Some(second);
+                    self.seconds_ten = Some(third);
+                    self.seconds_single = Some(fourth);
                     self.display_nums();
                 } else {
                     if first != self.minutes_ten.unwrap() {
-                        change_number(0, first);
-                        self.minutes_ten = first;
+                        self.change_number(0, &first);
+                        self.minutes_ten = Some(first);
                     }
                     if second != self.minutes_single.unwrap() {
-                        change_number(2, second);
-                        self.minutes_single = second;
+                        self.change_number(2, &second);
+                        self.minutes_single = Some(second);
                     }
                     if third != self.seconds_ten.unwrap() {
-                        change_number(6, third);
-                        self.seconds_ten = third;
+                        self.change_number(6, &third);
+                        self.seconds_ten = Some(third);
                     }
                     if fourth != self.seconds_single.unwrap() {
-                        change_number(8, fourth);
-                        self.seconds_single = fourth;
+                        self.change_number(8, &fourth);
+                        self.seconds_single = Some(fourth);
                     }
                 }
             } else {
@@ -131,14 +132,14 @@ impl ClockDisplay {
     fn display_nums(&mut self) -> () {
         // Retrieve a vec! of leds that need to be turned on for the numbers
         // Then turn them on
-        let mut leds = NUMBER_LEDS.get(self.minutes_ten).unwrap();
-        turn_on_leds(leds, 0);
-        let mut leds = NUMBER_LEDS.get(self.minutes_single).unwrap();
-        turn_on_leds(leds, 2);
-        let mut leds = NUMBER_LEDS.get(self.seconds_ten).unwrap();
-        turn_on_leds(leds, 6);
-        let mut leds = NUMBER_LEDS.get(self.seconds_single).unwrap();
-        turn_on_leds(leds, 8);
+        let mut leds = NUMBER_LEDS.get(&self.minutes_ten.unwrap()).unwrap();
+        self.turn_on_leds(leds, 0);
+        let mut leds = NUMBER_LEDS.get(&self.minutes_single.unwrap()).unwrap();
+        self.turn_on_leds(leds, 2);
+        let mut leds = NUMBER_LEDS.get(&self.seconds_ten.unwrap()).unwrap();
+        self.turn_on_leds(leds, 6);
+        let mut leds = NUMBER_LEDS.get(&self.seconds_single.unwrap()).unwrap();
+        self.turn_on_leds(leds, 8);
         self.display_colon(true);
     }
 
@@ -160,23 +161,23 @@ impl ClockDisplay {
         }
     }
 
-    fn change_number(&mut self, location: u8, new_number: u8) {
+    fn change_number(&mut self, location: u8, new_number: &u8) {
         let old_number = match location {
-            0 => self.minutes_ten,
-            2 => self.minutes_single,
-            6 => self.seconds_ten,
-            8 => self.seconds_single,
+            0 => &self.minutes_ten.unwrap(),
+            2 => &self.minutes_single.unwrap(),
+            6 => &self.seconds_ten.unwrap(),
+            8 => &self.seconds_single.unwrap(),
         };
         let old_leds = NUMBER_LEDS.get(old_number).unwrap();
         let new_leds = NUMBER_LEDS.get(new_number).unwrap();
         let leds_off = old_leds.iter().filter(|led| !new_leds.contains(led));
         let leds_on = new_leds.iter().filter(|led| !old_leds.contains(led));
         for led in leds_off {
-            let led_location = ht16k33::LedLocation::new(location, led).unwrap();
+            let led_location = ht16k33::LedLocation::new(location, *led).unwrap();
             self.display.set_led(led_location, false).unwrap();
         }
         for led in leds_on {
-            let led_location = ht16k33::LedLocation::new(location, led).unwrap();
+            let led_location = ht16k33::LedLocation::new(location, *led).unwrap();
             self.display.set_led(led_location, true).unwrap();
         }
     }
