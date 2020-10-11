@@ -47,13 +47,15 @@ impl ClockDisplay {
             let fourth = seconds % 10u8;
             self.display_num(0u8, first, true);
             self.display_num(2u8, second, true);
+            self.display_colon(true);
             self.display_num(6u8, third, true);
             self.display_num(8u8, fourth, true);
         }
         println!("{:?}:{:?}", minutes, seconds);
+        println!("{:?}:{:?}", diff);
         thread::sleep(time::Duration::from_secs(2));
         self.display.clear_display_buffer();
-        self.display.write_display_buffer();
+        self.display.write_display_buffer().unwrap();
     }
 
     /// Turns on the necessary leds for a number at the indicated location
@@ -86,6 +88,15 @@ impl ClockDisplay {
         // Turn on/off each led
         for led in leds {
             let led_location = ht16k33::LedLocation::new(location, *led).unwrap();
+            self.display.set_led(led_location, on).unwrap();
+        }
+    }
+
+    fn display_colon(&mut self, on: bool) -> () {
+        let leds = [0u8, 1u8];
+        // Turn on/off each led
+        for led in leds {
+            let led_location = ht16k33::LedLocation::new(4u8, *led).unwrap();
             self.display.set_led(led_location, on).unwrap();
         }
     }
