@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 ht16k33 = "0.4"
 chrono = "0.4"
+lazy_static = "1.4"
 
 [dependencies.rppal]
 version = "0.11"
