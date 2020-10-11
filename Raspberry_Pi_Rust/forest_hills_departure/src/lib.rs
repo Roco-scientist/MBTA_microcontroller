@@ -40,7 +40,7 @@ impl ClockDisplay {
             let diff = train_time.signed_duration_since(now);
             // separate out minutes and seconds for the display
             let minutes = diff.num_minutes() as u8;
-            let seconds = diff.num_seconds() as u8;
+            let seconds = (diff.num_seconds() % 60i64) as u8;
             if minutes < 100u8 {
                 let first = minutes / 10u8;
                 let second = minutes % 10u8;
