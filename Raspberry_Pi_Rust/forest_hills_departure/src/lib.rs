@@ -27,17 +27,17 @@ impl ClockDisplay {
     }
 
     /// Dispalys the minutes:seconds until the next train on the clock display
-    pub fn display_time_until(&self, train_time: chrono::DateTime<Utc>) -> () {
+    pub fn display_time_until(&mut self, train_time: chrono::DateTime<Utc>) -> () {
         let now = chrono::Utc::now();
-        let diff = now.signed_duration_since(train_time);
+        let diff = train_time.signed_duration_since(now);
         println!("{:?}", diff);
-        display_num(0u8, 6u8, true);
+        self.display_num(0u8, 6u8, true);
         thread::sleep(time::Duration::from_secs(2));
-        display_num(0u8, 6u8, false);
+        self.display_num(0u8, 6u8, false);
     }
 
     /// Turns on the necessary leds for a number at the indicated location
-    fn display_num(&self, location: u8, number: u8, on: bool) -> () {
+    fn display_num(&mut self, location: u8, number: u8, on: bool) -> () {
         //   _   0
         //  |_|  5, 6, 1
         //  |_|  4, 3, 2
