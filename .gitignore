@@ -2,3 +2,6 @@ mbta
 .mypy_cache
 target
 Cargo.lock
+led_test
+screen_test
+clock_test
