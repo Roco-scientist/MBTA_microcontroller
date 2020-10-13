@@ -5,6 +5,8 @@ extern crate lazy_static;
 extern crate rppal;
 extern crate std;
 
+mod train_time;
+
 use chrono::prelude::*;
 use rppal::i2c::I2c;
 use std::{collections::HashMap, thread, time};
@@ -70,10 +72,10 @@ impl ClockDisplay {
     }
 
     /// Dispalys the minutes:seconds until the next train on the clock display
-    pub fn display_time_until(&mut self, train_time: chrono::DateTime<Utc>) -> () {
+    pub fn display_time_until(&mut self, train_time: chrono::DateTime<Local>) -> () {
         for _ in 0..5 {
             // get now time in UTC
-            let now = chrono::Utc::now();
+            let now = chrono::Local::now();
             // get the difference between now and the train time
             let diff = train_time.signed_duration_since(now);
             // separate out minutes and seconds for the display
@@ -119,13 +121,16 @@ impl ClockDisplay {
                 self.minutes_single = None;
                 self.seconds_ten = None;
                 self.seconds_single = None;
-                self.display.clear_display_buffer();
-                self.display.write_display_buffer().unwrap();
+                self.clear_display();
             }
             println!("{:?}:{:?}", minutes, seconds);
             println!("{:?}", diff);
             thread::sleep(time::Duration::from_secs(1));
         }
+        self.clear_display();
+    }
+
+    pub fn clear_display(&mut self) -> () {
         self.display.clear_display_buffer();
         self.display.write_display_buffer().unwrap();
     }
