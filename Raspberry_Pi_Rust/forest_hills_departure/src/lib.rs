@@ -5,7 +5,7 @@ extern crate lazy_static;
 extern crate rppal;
 extern crate std;
 
-mod train_time;
+pub mod train_time;
 
 use chrono::prelude::*;
 use rppal::i2c::I2c;

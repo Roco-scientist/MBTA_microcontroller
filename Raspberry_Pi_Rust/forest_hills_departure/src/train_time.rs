@@ -1,6 +1,5 @@
 extern crate chrono;
 extern crate reqwest;
-extern crate serde;
 extern crate serde_json;
 extern crate std;
 
@@ -19,10 +18,13 @@ pub fn train_times() -> Result<Option<Vec<DateTime<Local>>>, Box<dyn std::error:
             *scheduled_times.get_mut(key).unwrap() = pred_times[key]
         }
     }
-    let mut all_times: Vec<DateTime<Local>> =
-        scheduled_times.values().map(|date| date.clone()).collect();
+    let now = Local::now();
+    let mut all_times = scheduled_times
+        .values()
+        .filter_map(|date| if date > &now {Some(date.clone())}else{None})
+        .collect::<Vec<DateTime<Local>>>();
     all_times.sort();
-    println!("{:?}", all_times);
+//    println!("{:?}", all_times);
     return Ok(Some(all_times));
 }
 
@@ -64,7 +66,7 @@ fn get_rout_times(
                     }
                 }
             }
-            println!("{:?}", commuter_rail_dep_time);
+ //           println!("{:?}", commuter_rail_dep_time);
             return Ok(Some(commuter_rail_dep_time));
         } else {
             return Ok(None);
