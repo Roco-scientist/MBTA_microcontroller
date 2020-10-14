@@ -32,6 +32,7 @@ https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack
 </table>
 
 ## How to run
-`cargo build`<br>
+`cargo build` or `cargo build --release`<br>
 `./target/debug/forest_hills_departure`
-
+### WARNING
+Takes over 2 hours to compile in --release on Raspberry Pi 0
