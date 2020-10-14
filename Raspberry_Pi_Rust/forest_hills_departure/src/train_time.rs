@@ -25,7 +25,7 @@ pub fn train_times() -> Result<Option<Vec<DateTime<Local>>>, Box<dyn std::error:
             if scheduled_times.keys().any(|schud_key| schud_key == key) {
                 *scheduled_times.get_mut(key).unwrap() = pred_times[key]
             } else {
-                scheduled_times[key] = pred_times[key]
+                scheduled_times.insert(key.clone(), pred_times[key]);
             }
         }
     }

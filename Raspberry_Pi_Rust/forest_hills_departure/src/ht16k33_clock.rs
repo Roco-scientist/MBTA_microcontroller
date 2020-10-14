@@ -159,7 +159,7 @@ impl ClockDisplay {
         // Turn on/off each led
         for led in leds {
             let led_location = ht16k33::LedLocation::new(location, *led).unwrap();
-            self.display.set_led(led_location, bool).unwrap();
+            self.display.set_led(led_location, on).unwrap();
         }
     }
 
@@ -187,17 +187,17 @@ impl ClockDisplay {
         let new_leds = NUMBER_LEDS.get(new_number).unwrap();
         if let Some(old_number) = old_number_option {
             // get the leds for th old number
-            let old_leds = NUMBER_LEDS.get(old_number).unwrap();
+            let old_leds = NUMBER_LEDS.get(&old_number).unwrap();
             // get what leds are in the old number and not the new to then be able to turn off
-            let leds_off = old_leds.iter().filter(|led| !new_leds.contains(led));
+            let leds_off = old_leds.iter().filter_map(|led| if !new_leds.contains(led){Some(led.clone())}else{None}).collect::<Vec<u8>>();
             // get what leds are in the new number but no tht eold to then be able to turn on
             // these two are used so that instead of turning all off then new on, only switching the
             // necessary leds
-            let leds_on = new_leds.iter().filter(|led| !old_leds.contains(led));
+            let leds_on = new_leds.iter().filter_map(|led| if !old_leds.contains(led){Some(led.clone())}else{None}).collect::<Vec<u8>>();
             // turn off leds
-            self.switch_leds(leds_off, location, false);
+            self.switch_leds(&leds_off, location, false);
             // turn on leds
-            self.switch_leds(leds_on, location, true)
+            self.switch_leds(&leds_on, location, true)
         } else {
             self.switch_leds(new_leds, location, true)
         }
