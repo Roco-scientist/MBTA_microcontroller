@@ -1,12 +1,7 @@
 extern crate chrono;
 extern crate ht16k33;
-#[macro_use]
-extern crate lazy_static;
 extern crate rppal;
 extern crate std;
-
-pub mod ssd1306_screen;
-pub mod train_time;
 
 use chrono::prelude::*;
 use rppal::i2c::I2c;
@@ -74,7 +69,7 @@ impl ClockDisplay {
 
     /// Dispalys the minutes:seconds until the next train on the clock display
     pub fn display_time_until(&mut self, train_time: &chrono::DateTime<Local>) -> () {
-        for _ in 0..5 {
+        for _ in 0..15 {
             // get now time in UTC
             let now = chrono::Local::now();
             // get the difference between now and the train time
