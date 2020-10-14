@@ -2,33 +2,31 @@ extern crate chrono;
 extern crate embedded_graphics;
 extern crate rppal; // Crate for SPI, I2C, and GPIO on raspberry pi
 extern crate ssd1306; // Crate for current I2C oled display
-extern crate std;
 
-use chrono::{DateTime, Local};
-use embedded_graphics::prelude::*;
+use chrono::{DateTime, Local, prelude::*};
 use embedded_graphics::{
+    prelude::*,
     fonts::{Font12x16, Text},
     pixelcolor::BinaryColor,
-    style::{TextStyle, TextStyleBuilder},
+    style::TextStyleBuilder,
 };
-use rppal::{gpio, i2c};
+use rppal::i2c;
 use ssd1306::{prelude::*, Builder, I2CDIBuilder};
-use std::{thread, time};
 
-pub struct DisplayScreen {
-    display: GraphicsMode<_>,
+pub struct ScreenDisplay {
+    display: GraphicsMode<I2CInterface<i2c::I2c>>,
     train1: Option<DateTime<Local>>,
     train2: Option<DateTime<Local>>,
 }
 
-impl DisplayScreen {
-    pub fn new(address: u8) -> DisplayScreen {
+impl ScreenDisplay {
+    pub fn new() -> ScreenDisplay {
         let i2c4 = i2c::I2c::with_bus(4u8).unwrap();
         // let address = 60u8;
         let interface = I2CDIBuilder::new().init(i2c4);
         let mut disp: GraphicsMode<_> = Builder::new().connect(interface).into();
         disp.init().unwrap();
-        return DisplayScreen(disp, None, None);
+        return ScreenDisplay{display: disp, train1: None, train2: None};
     }
     pub fn display_trains(&mut self, train_times: &Vec<DateTime<Local>>) -> () {
         let mut update_screen = false;
@@ -52,17 +50,21 @@ impl DisplayScreen {
             if let Some(train1) = self.train1 {
                 let hour = train1.hour();
                 let minute = train1.minute();
-                Text::new(format!("{}:{}", hour, minute), Point::new(5, 5))
+                let time = format!("{}:{}", hour, minute);
+                Text::new(&time, Point::new(35, 5))
                     .into_styled(text_style)
-                    .draw(self.display);
+                    .draw(&mut self.display)
+                    .unwrap();
                 self.display.flush().unwrap();
             }
             if let Some(train2) = self.train2 {
                 let hour = train2.hour();
                 let minute = train2.minute();
-                Text::new(format!("{}:{}", hour, minute), Point::new(20, 5))
+                let time = format!("{}:{}", hour, minute);
+                Text::new(&time, Point::new(35, 25))
                     .into_styled(text_style)
-                    .draw(self.display);
+                    .draw(&mut self.display)
+                    .unwrap();
                 self.display.flush().unwrap();
             }
         }
