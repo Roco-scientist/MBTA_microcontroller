@@ -63,7 +63,7 @@ impl ScreenDisplay {
         }
         // if train times were different than what's on the display, update display
         if update_screen {
-            self.clear_display();
+            self.clear_display(false);
             // create a new text style for the screen with chosen font
             let text_style = TextStyleBuilder::new(Font12x16)
                 .text_color(BinaryColor::On)
@@ -94,7 +94,11 @@ impl ScreenDisplay {
     }
 
     /// Function to clear screen display
-    pub fn clear_display(&mut self) -> () {
+    pub fn clear_display(&mut self, reset_trains:bool) -> () {
+        if reset_trains {
+            self.train1 = None;
+            self.train2 = None;
+        }
         // clears the buffer
         self.display.clear();
         // sends cleared buffer to screen to refresh
