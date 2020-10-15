@@ -36,7 +36,7 @@ pub fn train_times(
     let mut all_times = scheduled_times
         .values()
         .filter_map(|date| {
-            if date > &(now + Duration::minutes(minimum_display_min)) {
+            if date > &(now + Duration::minutes(*minimum_display_min)) {
                 Some(date.clone())
             } else {
                 None
