@@ -1,13 +1,18 @@
 extern crate std;
 
 use forest_hills_departure;
-use std::{sync::{Mutex, Arc}, thread, time};
+use std::{
+    sync::{Arc, Mutex},
+    thread, time,
+};
 
 fn main() {
+    let minimum_display_min = 9i64;
     // get the initial time trains and put them in a thread safe value to be passed back and forth
     // between threads
     let train_times_option = Arc::new(Mutex::new(
-        forest_hills_departure::train_time::train_times().unwrap_or_else(|err| panic!("{:?}", err)),
+        forest_hills_departure::train_time::train_times(&minimum_display_min)
+            .unwrap_or_else(|err| panic!("{:?}", err)),
     ));
     // create a new clock struct, this initializes the display
     let mut clock = forest_hills_departure::ht16k33_clock::ClockDisplay::new();
@@ -18,7 +23,7 @@ fn main() {
     // Find train times every minute and replace train_times with new value
     thread::spawn(move || loop {
         thread::sleep(time::Duration::from_secs(60));
-        let new_train_times = forest_hills_departure::train_time::train_times()
+        let new_train_times = forest_hills_departure::train_time::train_times(&minimum_display_min)
             .unwrap_or_else(|err| panic!("{:?}", err));
         let mut old_train = train_times_clone.lock().unwrap();
         *old_train = new_train_times;
