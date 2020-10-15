@@ -7,7 +7,7 @@ use std::{
 };
 
 fn main() {
-    let minimum_display_min = 9i64;
+    let minimum_display_min = 5i64;
     // get the initial time trains and put them in a thread safe value to be passed back and forth
     // between threads
     let train_times_option = Arc::new(Mutex::new(

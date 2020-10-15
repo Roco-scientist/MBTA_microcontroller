@@ -3,7 +3,7 @@ extern crate embedded_graphics;
 extern crate rppal; // Crate for SPI, I2C, and GPIO on raspberry pi
 extern crate ssd1306; // Crate for current I2C oled display
 
-use chrono::{prelude::*, DateTime, Local};
+use chrono::{DateTime, Local};
 use embedded_graphics::{
     fonts::{Font12x16, Text},
     pixelcolor::BinaryColor,
@@ -81,7 +81,7 @@ impl ScreenDisplay {
             }
             // if there is a train2, display train time
             if let Some(train2) = self.train2 {
-                let time = train1.format("%H:%M").to_string();
+                let time = train2.format("%H:%M").to_string();
                 // creats text buffer
                 Text::new(&time, Point::new(35, 25))
                     .into_styled(text_style)
