@@ -118,16 +118,17 @@ impl ClockDisplay {
             }
         } else {
             // if minutes is greater than 100 clear dispaly and set all values to none
-            self.minutes_ten = None;
-            self.minutes_single = None;
-            self.seconds_ten = None;
-            self.seconds_single = None;
             self.clear_display();
         }
     }
 
     /// Clears clock display
     pub fn clear_display(&mut self) -> () {
+        //set all values to None
+        self.minutes_ten = None;
+        self.minutes_single = None;
+        self.seconds_ten = None;
+        self.seconds_single = None;
         // clear the display buffer then push to clock to create a clear clock
         self.display.clear_display_buffer();
         self.display.write_display_buffer().unwrap();
