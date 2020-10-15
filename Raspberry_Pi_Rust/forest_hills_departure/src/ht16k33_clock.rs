@@ -76,28 +76,22 @@ impl ClockDisplay {
         // get the difference between now and the train time
         let diff = train_time.signed_duration_since(now);
         // separate out minutes and seconds for the display
-        // if minutes are above 250, reduce so it can be a u8
-        let minutes;
-        if diff.num_minutes() < 250i64 {
-            minutes = diff.num_minutes() as u8;
-        } else {
-            minutes = 250u8;
-        }
+        let minutes = diff.num_minutes();
         // Seconds as the remainder after minutes are removed
-        let seconds = (diff.num_seconds() % 60i64) as u8;
+        let seconds = diff.num_seconds() % 60i64;
         // Clock display only has two digits for minutes, so minutes need to be below 100
-        if minutes < 100u8 {
+        if 0i64 < minutes && minutes < 100i64 {
             // find all of the new digits for displaying difference
             // first digit, which is the tens minutes
-            let first = minutes / 10u8;
+            let first = (minutes as u8) / 10u8;
             // second digit, which is the single minutes
-            let second = minutes % 10u8;
+            let second = (minutes as u8) % 10u8;
             // third digit, which is the seconds ten
-            let third = seconds / 10u8;
+            let third = (seconds as u8) / 10u8;
             // fourth digit, which is the seconds single
-            let fourth = seconds % 10u8;
+            let fourth = (seconds as u8) % 10u8;
             // if current display has no values, then display all of the new values
-            if self.minutes_ten.is_none() {
+            if vec![self.minutes_ten, self.minutes_single, self.seconds_ten, self.seconds_single].iter().any(|digit| digit.is_none()) {
                 self.minutes_ten = Some(first);
                 self.minutes_single = Some(second);
                 self.seconds_ten = Some(third);
