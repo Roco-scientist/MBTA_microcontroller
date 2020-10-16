@@ -43,6 +43,9 @@ pub fn train_times() -> Result<Option<Vec<DateTime<Local>>>, Box<dyn std::error:
         .collect::<Vec<DateTime<Local>>>();
     all_times.sort();
     //    println!("{:?}", all_times);
+    if all_times.len() == 0usize {
+        return Ok(None);
+    }
     return Ok(Some(all_times));
 }
 

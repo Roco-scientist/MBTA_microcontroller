@@ -34,14 +34,8 @@ fn main() {
         let train_times_unlocked = train_times_option.lock().unwrap();
         // if there are some train times, display on clock and screen
         if let Some(train_times) = &*train_times_unlocked {
-            if train_times.len() != 0usize {
-                screen.display_trains(&train_times);
-                clock.display_time_until(&train_times, &minimum_display_min);
-            } else {
-                // if there are no train times, clear both displays
-                screen.clear_display(true);
-                clock.clear_display();
-            }
+            screen.display_trains(&train_times);
+            clock.display_time_until(&train_times, &minimum_display_min);
         } else {
             // if there are no train times, clear both displays
             screen.clear_display(true);
