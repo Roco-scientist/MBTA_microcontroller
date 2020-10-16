@@ -11,8 +11,7 @@ fn main() {
     // get the initial time trains and put them in a thread safe value to be passed back and forth
     // between threads
     let train_times_option = Arc::new(Mutex::new(
-        forest_hills_departure::train_time::train_times(&minimum_display_min)
-            .unwrap_or_else(|err| panic!("{:?}", err)),
+        forest_hills_departure::train_time::train_times().unwrap_or_else(|err| panic!("{:?}", err)),
     ));
     // create a new clock struct, this initializes the display
     let mut clock = forest_hills_departure::ht16k33_clock::ClockDisplay::new();
@@ -23,7 +22,7 @@ fn main() {
     // Find train times every minute and replace train_times with new value
     thread::spawn(move || loop {
         thread::sleep(time::Duration::from_secs(60));
-        let new_train_times = forest_hills_departure::train_time::train_times(&minimum_display_min)
+        let new_train_times = forest_hills_departure::train_time::train_times()
             .unwrap_or_else(|err| panic!("{:?}", err));
         let mut old_train = train_times_clone.lock().unwrap();
         *old_train = new_train_times;
@@ -35,10 +34,10 @@ fn main() {
         let train_times_unlocked = train_times_option.lock().unwrap();
         // if there are some train times, display on clock and screen
         if let Some(train_times) = &*train_times_unlocked {
-            if train_times.len() != 0usize{
+            if train_times.len() != 0usize {
                 screen.display_trains(&train_times);
-                clock.display_time_until(&train_times[0]);
-            }else{
+                clock.display_time_until(&train_times, &minimum_display_min);
+            } else {
                 // if there are no train times, clear both displays
                 screen.clear_display(true);
                 clock.clear_display();

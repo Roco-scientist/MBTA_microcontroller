@@ -9,9 +9,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 /// Main function to retrieve train times from Forest Hills Station for inbound commuter rail
-pub fn train_times(
-    minimum_display_min: &i64,
-) -> Result<Option<Vec<DateTime<Local>>>, Box<dyn std::error::Error>> {
+pub fn train_times() -> Result<Option<Vec<DateTime<Local>>>, Box<dyn std::error::Error>> {
     // forest hills station code
     let station = "forhl";
     // inbound code
@@ -36,7 +34,7 @@ pub fn train_times(
     let mut all_times = scheduled_times
         .values()
         .filter_map(|date| {
-            if date > &(now + Duration::minutes(*minimum_display_min)) {
+            if date > &now {
                 Some(date.clone())
             } else {
                 None

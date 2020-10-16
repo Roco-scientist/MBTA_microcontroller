@@ -70,17 +70,31 @@ impl ClockDisplay {
     }
 
     /// Dispalys the minutes:seconds until the next train on the clock display
-    pub fn display_time_until(&mut self, train_time: &chrono::DateTime<Local>) -> () {
+    pub fn display_time_until(
+        &mut self,
+        train_times: &Vec<chrono::DateTime<Local>>,
+        minimum_display_min: &i64,
+    ) -> () {
         // get now time in UTC
         let now = chrono::Local::now();
         // get the difference between now and the train time
-        let diff = train_time.signed_duration_since(now);
+        let mut diff = train_times[0].signed_duration_since(now);
+        // if difference is less than minumum display, use next train
+        if diff.num_minutes() < *minimum_display_min {
+            if train_time.len() > 1usize {
+                diff = train_times[1].signed_duration_since(now)
+            } else {
+                // if there is not a next train, clear display and end
+                self.clear_display();
+                return ();
+            }
+        }
         // separate out minutes and seconds for the display
         let minutes = diff.num_minutes();
         // Seconds as the remainder after minutes are removed
         let seconds = diff.num_seconds() % 60i64;
         // Clock display only has two digits for minutes, so minutes need to be below 100
-        if 0i64 < minutes && minutes < 100i64 {
+        if *minimum_display_min < minutes && minutes < 100i64 {
             // find all of the new digits for displaying difference
             // first digit, which is the tens minutes
             let first = (minutes as u8) / 10u8;
@@ -91,7 +105,15 @@ impl ClockDisplay {
             // fourth digit, which is the seconds single
             let fourth = (seconds as u8) % 10u8;
             // if current display has no values, then display all of the new values
-            if vec![self.minutes_ten, self.minutes_single, self.seconds_ten, self.seconds_single].iter().any(|digit| digit.is_none()) {
+            if vec![
+                self.minutes_ten,
+                self.minutes_single,
+                self.seconds_ten,
+                self.seconds_single,
+            ]
+            .iter()
+            .any(|digit| digit.is_none())
+            {
                 self.minutes_ten = Some(first);
                 self.minutes_single = Some(second);
                 self.seconds_ten = Some(third);
@@ -184,11 +206,29 @@ impl ClockDisplay {
             // get the leds for th old number
             let old_leds = NUMBER_LEDS.get(&old_number).unwrap();
             // get what leds are in the old number and not the new to then be able to turn off
-            let leds_off = old_leds.iter().filter_map(|led| if !new_leds.contains(led){Some(led.clone())}else{None}).collect::<Vec<u8>>();
+            let leds_off = old_leds
+                .iter()
+                .filter_map(|led| {
+                    if !new_leds.contains(led) {
+                        Some(led.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<u8>>();
             // get what leds are in the new number but no tht eold to then be able to turn on
             // these two are used so that instead of turning all off then new on, only switching the
             // necessary leds
-            let leds_on = new_leds.iter().filter_map(|led| if !old_leds.contains(led){Some(led.clone())}else{None}).collect::<Vec<u8>>();
+            let leds_on = new_leds
+                .iter()
+                .filter_map(|led| {
+                    if !old_leds.contains(led) {
+                        Some(led.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<u8>>();
             // turn off leds
             self.switch_leds(&leds_off, location, false);
             // turn on leds
