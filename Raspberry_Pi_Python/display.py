@@ -254,7 +254,7 @@ def main() -> None:
         clock_display.display_time(train_times)
         screen_display.display_time(train_times)
     for _ in range(20):
-        # get departure times
+        # get departure times in a separate thread to continue displays during retrieval
         executor = concurrent.futures.ThreadPoolExecutor()
         future = executor.submit(get_train_times, script_args.station,
                                  script_args.direction, script_args.type)
@@ -264,12 +264,15 @@ def main() -> None:
             for _ in range(20):
                 clock_display.display_time(train_times)
                 time.sleep(0.25)
+        # if there are no trains, clear displyas
         else:
             clock_display.clear_clock()
             screen_display.clear_display()
-        times = future.result()
+        # pull trains times from other thread
+        train_times = future.result()
+        # shutdown other thread
         executor.shutdown(wait=False)
-    # clear clock when done
+    # clear displays when done
     clock_display.clear_clock()
     screen_display.clear_display()
 
