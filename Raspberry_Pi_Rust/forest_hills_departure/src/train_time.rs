@@ -4,7 +4,7 @@ extern crate serde_json;
 extern crate std;
 
 use chrono::prelude::*;
-use chrono::{DateTime, Duration, Local, TimeZone};
+use chrono::{DateTime, Local, TimeZone};
 use serde_json::Value;
 use std::collections::HashMap;
 
