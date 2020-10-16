@@ -70,70 +70,87 @@ impl ClockDisplay {
     }
 
     /// Dispalys the minutes:seconds until the next train on the clock display
-    pub fn display_time_until(&mut self, train_time: &chrono::DateTime<Local>) -> () {
-            // get now time in UTC
-            let now = chrono::Local::now();
-            // get the difference between now and the train time
-            let diff = train_time.signed_duration_since(now);
-            // separate out minutes and seconds for the display
-            // if minutes are above 250, reduce so it can be a u8
-            let minutes;
-            if diff.num_minutes() < 250i64 {
-                minutes = diff.num_minutes() as u8;
+    pub fn display_time_until(
+        &mut self,
+        train_times: &Vec<chrono::DateTime<Local>>,
+        minimum_display_min: &i64,
+    ) -> () {
+        // get now time in UTC
+        let now = chrono::Local::now();
+        // get the difference between now and the train time
+        let mut diff = train_times[0].signed_duration_since(now);
+        // if difference is less than minumum display, use next train
+        if diff.num_minutes() < *minimum_display_min {
+            if train_times.len() > 1usize {
+                diff = train_times[1].signed_duration_since(now)
             } else {
-                minutes = 250u8;
-            }
-            // Seconds as the remainder after minutes are removed
-            let seconds = (diff.num_seconds() % 60i64) as u8;
-            // Clock display only has two digits for minutes, so minutes need to be below 100
-            if minutes < 100u8 {
-                // find all of the new digits for displaying difference
-                // first digit, which is the tens minutes
-                let first = minutes / 10u8;
-                // second digit, which is the single minutes
-                let second = minutes % 10u8;
-                // third digit, which is the seconds ten
-                let third = seconds / 10u8;
-                // fourth digit, which is the seconds single
-                let fourth = seconds % 10u8;
-                // if current display has no values, then display all of the new values
-                if self.minutes_ten.is_none() {
-                    self.minutes_ten = Some(first);
-                    self.minutes_single = Some(second);
-                    self.seconds_ten = Some(third);
-                    self.seconds_single = Some(fourth);
-                    self.display_nums();
-                } else {
-                    // else change only the values that have changed
-                    if Some(first) != self.minutes_ten {
-                        self.change_number(0, &first);
-                        self.minutes_ten = Some(first);
-                    }
-                    if Some(second) != self.minutes_single {
-                        self.change_number(2, &second);
-                        self.minutes_single = Some(second);
-                    }
-                    if Some(third) != self.seconds_ten {
-                        self.change_number(6, &third);
-                        self.seconds_ten = Some(third);
-                    }
-                    if Some(fourth) != self.seconds_single {
-                        self.change_number(8, &fourth);
-                        self.seconds_single = Some(fourth);
-                    }
-                }
-            } else {
-                // if minutes is greater than 100 clear dispaly and set all values to none
-                self.minutes_ten = None;
-                self.minutes_single = None;
-                self.seconds_ten = None;
-                self.seconds_single = None;
+                // if there is not a next train, clear display and end
                 self.clear_display();
+                return ();
             }
+        }
+        // separate out minutes and seconds for the display
+        let minutes = diff.num_minutes();
+        // Seconds as the remainder after minutes are removed
+        let seconds = diff.num_seconds() % 60i64;
+        // Clock display only has two digits for minutes, so minutes need to be below 100
+        if *minimum_display_min < minutes && minutes < 100i64 {
+            // find all of the new digits for displaying difference
+            // first digit, which is the tens minutes
+            let first = (minutes as u8) / 10u8;
+            // second digit, which is the single minutes
+            let second = (minutes as u8) % 10u8;
+            // third digit, which is the seconds ten
+            let third = (seconds as u8) / 10u8;
+            // fourth digit, which is the seconds single
+            let fourth = (seconds as u8) % 10u8;
+            // if current display has no values, then display all of the new values
+            if vec![
+                self.minutes_ten,
+                self.minutes_single,
+                self.seconds_ten,
+                self.seconds_single,
+            ]
+            .iter()
+            .any(|digit| digit.is_none())
+            {
+                self.minutes_ten = Some(first);
+                self.minutes_single = Some(second);
+                self.seconds_ten = Some(third);
+                self.seconds_single = Some(fourth);
+                self.display_nums();
+            } else {
+                // else change only the values that have changed
+                if Some(first) != self.minutes_ten {
+                    self.change_number(0, &first);
+                    self.minutes_ten = Some(first);
+                }
+                if Some(second) != self.minutes_single {
+                    self.change_number(2, &second);
+                    self.minutes_single = Some(second);
+                }
+                if Some(third) != self.seconds_ten {
+                    self.change_number(6, &third);
+                    self.seconds_ten = Some(third);
+                }
+                if Some(fourth) != self.seconds_single {
+                    self.change_number(8, &fourth);
+                    self.seconds_single = Some(fourth);
+                }
+            }
+        } else {
+            // if minutes is greater than 100 clear dispaly and set all values to none
+            self.clear_display();
+        }
     }
 
     /// Clears clock display
     pub fn clear_display(&mut self) -> () {
+        //set all values to None
+        self.minutes_ten = None;
+        self.minutes_single = None;
+        self.seconds_ten = None;
+        self.seconds_single = None;
         // clear the display buffer then push to clock to create a clear clock
         self.display.clear_display_buffer();
         self.display.write_display_buffer().unwrap();
@@ -144,22 +161,22 @@ impl ClockDisplay {
         // Retrieve a vec! of leds that need to be turned on for the numbers
         // Then turn them on
         let leds = NUMBER_LEDS.get(&self.minutes_ten.unwrap()).unwrap();
-        self.turn_on_leds(leds, 0);
+        self.switch_leds(leds, 0, true);
         let leds = NUMBER_LEDS.get(&self.minutes_single.unwrap()).unwrap();
-        self.turn_on_leds(leds, 2);
+        self.switch_leds(leds, 2, true);
         let leds = NUMBER_LEDS.get(&self.seconds_ten.unwrap()).unwrap();
-        self.turn_on_leds(leds, 6);
+        self.switch_leds(leds, 6, true);
         let leds = NUMBER_LEDS.get(&self.seconds_single.unwrap()).unwrap();
-        self.turn_on_leds(leds, 8);
+        self.switch_leds(leds, 8, true);
         self.display_colon(true);
     }
 
-    /// Turns on the necessary leds for a number at the indicated location
-    fn turn_on_leds(&mut self, leds: &Vec<u8>, location: u8) -> () {
+    /// Turns on/off the necessary leds for a number at the indicated location
+    fn switch_leds(&mut self, leds: &Vec<u8>, location: u8, on: bool) -> () {
         // Turn on/off each led
         for led in leds {
             let led_location = ht16k33::LedLocation::new(location, *led).unwrap();
-            self.display.set_led(led_location, true).unwrap();
+            self.display.set_led(led_location, on).unwrap();
         }
     }
 
@@ -176,32 +193,48 @@ impl ClockDisplay {
 
     fn change_number(&mut self, location: u8, new_number: &u8) {
         // determine which struct digit to pull based on led location
-        let old_number = match location {
-            0u8 => self.minutes_ten.unwrap().clone(),
-            2u8 => self.minutes_single.unwrap().clone(),
-            6u8 => self.seconds_ten.unwrap().clone(),
-            8u8 => self.seconds_single.unwrap().clone(),
+        let old_number_option = match location {
+            0u8 => self.minutes_ten,
+            2u8 => self.minutes_single,
+            6u8 => self.seconds_ten,
+            8u8 => self.seconds_single,
             _ => panic!("location not recognized"),
         };
-        // get the leds for th old number
-        let old_leds = NUMBER_LEDS.get(&old_number).unwrap();
         // get the leds for the new number
         let new_leds = NUMBER_LEDS.get(new_number).unwrap();
-        // get what leds are in the old number and not the new to then be able to turn off
-        let leds_off = old_leds.iter().filter(|led| !new_leds.contains(led));
-        // get what leds are in the new number but no tht eold to then be able to turn on
-        // these two are used so that instead of turning all off then new on, only switching the
-        // necessary leds
-        let leds_on = new_leds.iter().filter(|led| !old_leds.contains(led));
-        // turn off leds
-        for led in leds_off {
-            let led_location = ht16k33::LedLocation::new(location, *led).unwrap();
-            self.display.set_led(led_location, false).unwrap();
-        }
-        // turn on leds
-        for led in leds_on {
-            let led_location = ht16k33::LedLocation::new(location, *led).unwrap();
-            self.display.set_led(led_location, true).unwrap();
+        if let Some(old_number) = old_number_option {
+            // get the leds for th old number
+            let old_leds = NUMBER_LEDS.get(&old_number).unwrap();
+            // get what leds are in the old number and not the new to then be able to turn off
+            let leds_off = old_leds
+                .iter()
+                .filter_map(|led| {
+                    if !new_leds.contains(led) {
+                        Some(led.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<u8>>();
+            // get what leds are in the new number but no tht eold to then be able to turn on
+            // these two are used so that instead of turning all off then new on, only switching the
+            // necessary leds
+            let leds_on = new_leds
+                .iter()
+                .filter_map(|led| {
+                    if !old_leds.contains(led) {
+                        Some(led.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<u8>>();
+            // turn off leds
+            self.switch_leds(&leds_off, location, false);
+            // turn on leds
+            self.switch_leds(&leds_on, location, true)
+        } else {
+            self.switch_leds(new_leds, location, true)
         }
     }
 }

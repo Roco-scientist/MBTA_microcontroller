@@ -22,17 +22,30 @@ pub fn train_times() -> Result<Option<Vec<DateTime<Local>>>, Box<dyn std::error:
     // tiem
     if let Some(pred_times) = prediction_times {
         for key in pred_times.keys() {
-            *scheduled_times.get_mut(key).unwrap() = pred_times[key]
+            if scheduled_times.keys().any(|schud_key| schud_key == key) {
+                *scheduled_times.get_mut(key).unwrap() = pred_times[key]
+            } else {
+                scheduled_times.insert(key.clone(), pred_times[key]);
+            }
         }
     }
     // get the current time and filter out any train time before now
     let now = Local::now();
     let mut all_times = scheduled_times
         .values()
-        .filter_map(|date| if date > &now {Some(date.clone())}else{None})
+        .filter_map(|date| {
+            if date > &now {
+                Some(date.clone())
+            } else {
+                None
+            }
+        })
         .collect::<Vec<DateTime<Local>>>();
     all_times.sort();
-//    println!("{:?}", all_times);
+    //    println!("{:?}", all_times);
+    if all_times.len() == 0usize {
+        return Ok(None);
+    }
     return Ok(Some(all_times));
 }
 

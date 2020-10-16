@@ -1,9 +1,13 @@
 extern crate std;
 
 use forest_hills_departure;
-use std::{sync::{Mutex, Arc}, thread, time};
+use std::{
+    sync::{Arc, Mutex},
+    thread, time,
+};
 
 fn main() {
+    let minimum_display_min = 5i64;
     // get the initial time trains and put them in a thread safe value to be passed back and forth
     // between threads
     let train_times_option = Arc::new(Mutex::new(
@@ -31,10 +35,10 @@ fn main() {
         // if there are some train times, display on clock and screen
         if let Some(train_times) = &*train_times_unlocked {
             screen.display_trains(&train_times);
-            clock.display_time_until(&train_times[0]);
+            clock.display_time_until(&train_times, &minimum_display_min);
         } else {
             // if there are no train times, clear both displays
-            screen.clear_display();
+            screen.clear_display(true);
             clock.clear_display();
         }
     }

@@ -3,11 +3,11 @@ extern crate embedded_graphics;
 extern crate rppal; // Crate for SPI, I2C, and GPIO on raspberry pi
 extern crate ssd1306; // Crate for current I2C oled display
 
-use chrono::{DateTime, Local, prelude::*};
+use chrono::{DateTime, Local};
 use embedded_graphics::{
-    prelude::*,
     fonts::{Font12x16, Text},
     pixelcolor::BinaryColor,
+    prelude::*,
     style::TextStyleBuilder,
 };
 use rppal::i2c;
@@ -34,7 +34,11 @@ impl ScreenDisplay {
         let mut disp: GraphicsMode<_> = Builder::new().connect(interface).into();
         // initializes the display
         disp.init().unwrap();
-        return ScreenDisplay{display: disp, train1: None, train2: None};
+        return ScreenDisplay {
+            display: disp,
+            train1: None,
+            train2: None,
+        };
     }
 
     /// Displays train1 and train2 on the screen display
@@ -59,16 +63,14 @@ impl ScreenDisplay {
         }
         // if train times were different than what's on the display, update display
         if update_screen {
-            self.clear_display();
+            self.clear_display(false);
             // create a new text style for the screen with chosen font
             let text_style = TextStyleBuilder::new(Font12x16)
                 .text_color(BinaryColor::On)
                 .build();
             // if there is a train1, display train time
             if let Some(train1) = self.train1 {
-                let hour = train1.hour();
-                let minute = train1.minute();
-                let time = format!("{}:{}", hour, minute);
+                let time = train1.format("%H:%M").to_string();
                 // creates text buffer
                 Text::new(&time, Point::new(35, 5))
                     .into_styled(text_style)
@@ -79,9 +81,7 @@ impl ScreenDisplay {
             }
             // if there is a train2, display train time
             if let Some(train2) = self.train2 {
-                let hour = train2.hour();
-                let minute = train2.minute();
-                let time = format!("{}:{}", hour, minute);
+                let time = train2.format("%H:%M").to_string();
                 // creats text buffer
                 Text::new(&time, Point::new(35, 25))
                     .into_styled(text_style)
@@ -94,7 +94,11 @@ impl ScreenDisplay {
     }
 
     /// Function to clear screen display
-    pub fn clear_display(&mut self) -> () {
+    pub fn clear_display(&mut self, reset_trains:bool) -> () {
+        if reset_trains {
+            self.train1 = None;
+            self.train2 = None;
+        }
         // clears the buffer
         self.display.clear();
         // sends cleared buffer to screen to refresh
