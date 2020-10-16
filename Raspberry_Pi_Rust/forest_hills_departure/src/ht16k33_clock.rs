@@ -81,7 +81,7 @@ impl ClockDisplay {
         let mut diff = train_times[0].signed_duration_since(now);
         // if difference is less than minumum display, use next train
         if diff.num_minutes() < *minimum_display_min {
-            if train_time.len() > 1usize {
+            if train_times.len() > 1usize {
                 diff = train_times[1].signed_duration_since(now)
             } else {
                 // if there is not a next train, clear display and end
