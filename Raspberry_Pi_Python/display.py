@@ -23,6 +23,113 @@ __email__ = "coffeyrt@gmail.com"
 __date__ = "2020-09-21"
 
 
+class ht16k33_clock:
+    """
+    Object for interacting with ht16k33 board controlled 7x4 clock display
+    """
+    # setup clock display
+    # variables are the same for every instance setup, so not inside __init__
+    display = Seg7x4(board.I2C())
+    display.brightness = 0.4
+    # setup display variables
+    time_display: Optional[str] = None
+
+    def display_time(self, train_times: List[datetime.datetime], min_clock_display=0):
+        """
+        Finds the time difference between the first train and now, then displays it on the clock
+        display
+        """
+        # set the countdown display time
+        self.clock_countdown_time(train_times, min_clock_display)
+        # If a time is not None, display
+        if self.time_display is not None:
+            self.display.print(self.time_display)
+        # Else clear the clock
+        else:
+            self.clear_clock()
+
+    def clock_countdown_time(self, train_times: List[datetime.datetime], min_clock_display: int):
+        """
+        Takes in the train departure times and finds the difference between the soonest departure and
+        now. Aslo has a minimum difference varaible so that if it takes a certain amount of time to walk
+        to station, to account for that and only display a countdown that is achievable to walk to.
+        :train_times: list of train departure times
+        :min_clock_display: the minimum difference to display in minutes
+        :return: Either the display countdown time or None if there isn't one within 99 minutes, the
+                display limit
+        """
+        # Retrieve current time to compare
+        now = datetime.datetime.now()
+        # Get the difference between the soonest train and now
+        train_num = 0
+        next_train = train_times[train_num] - now
+        # get seconds for the display
+        next_train_seconds = str(next_train.seconds % 60)
+        # make sure it is 0 padded
+        if len(next_train_seconds) == 1:
+            next_train_seconds = f"0{next_train_seconds}"
+        # get the minutes for the display
+        next_train_minutes = next_train.seconds / 60
+        # While the difference is less than the minimum, use the next train/bus
+        while (next_train_minutes < min_clock_display) and train_num < len(train_times):
+            train_num += 1
+            next_train = train_times[train_num] - now
+            next_train_minutes = next_train.seconds / 60
+        next_train_minutes_str = str(int(next_train_minutes))
+        # make sure it is 0 padded
+        if len(next_train_minutes_str) == 1:
+            next_train_minutes_str = f"0{next_train_minutes}"
+        # If minutes are not a length of 3 (too large for display)
+        if len(next_train_minutes_str) == 2 and (next_train_minutes) > min_clock_display:
+            # Change the display time
+            self.time_display = f"{next_train_minutes}:{next_train_seconds}"
+        # Else time display is None
+        else:
+            self.time_display = None
+
+    def clear_clock(self):
+        """
+        Clears the clock display.  Otherwise it stays on, even after the program runs
+        """
+        # Use I2C connection for clock display
+        i2c = board.I2C()
+        # Create a new display which clears the current display
+        self.display = Seg7x4(i2c)
+
+
+class sh1106_screen:
+    """
+    Object for interacting with sh1106 board controlled screen display
+    """
+    # setup screen display
+    # variables are the same for every instance setup, so not inside __init__
+    display = sh1106(spi())
+
+    def display_time(self, times: List[datetime.datetime], min_clock_display: int = 0) -> None:
+        """
+        Pulls in times and pushes the information to the screen display
+        :times: list of departure times
+        :min_clock_display: the minimum difference in minutes to display on the countdown clock
+        """
+        # Display times on the SPI sh1106 screen
+        with canvas(self.display) as draw:
+            draw.rectangle(self.display.bounding_box, outline="white", fill="black")
+            draw.text((25, 10), "Schedule: ", fill="white")
+            # For up to 3 train times, display their schedule
+            for x in range(min(3, len(times))):
+                train_num = x + 1
+                display_y = (train_num * 10) + 10
+                # Display train number and departure time
+                draw.text((25, display_y),
+                          f"{train_num}: {times[x].strftime('%H:%M')}", fill="white")
+
+    def clear_display(self):
+        """
+        Creates new instance of display in order to clear the current display
+        """
+        self.display = sh1106(spi())
+
+
 def arguments():
     parser = argparse.ArgumentParser(
         description="Get and display station commuter rail arrival times")
@@ -54,7 +161,7 @@ def get_routes_times(api: str) -> Dict[str, datetime.datetime]:
         # Iterate through routes
         for data in api_data:
             # Pull the departure time and remove the timezone information
-            departure_time = data['attributes']['departure_time'].replace("-04:00", "") 
+            departure_time = data['attributes']['departure_time'].replace("-04:00", "")
             # Convert to datetime.datetime
             departure_time_datetime = datetime.datetime.fromisoformat(departure_time)
             # Pull the trip id
@@ -79,7 +186,7 @@ def get_scheduled_times(station: str, dir_code: str, vehicle_type: str) -> Dict[
     now = datetime.datetime.now()
     # The MBTA schedules api with variable added
     schedules_api = \
-    f"https://api-v3.mbta.com/schedules?include=route,trip,stop&filter[min_time]={now.hour}%3A{now.minute}&filter[stop]=place-{station}&filter[route]=CR-Needham&filter[direction_id]={dir_code}"
+        f"https://api-v3.mbta.com/schedules?include=route,trip,stop&filter[min_time]={now.hour}%3A{now.minute}&filter[stop]=place-{station}&filter[route]=CR-Needham&filter[direction_id]={dir_code}"
     # Gets the route times dictionary
     scheduled_times = get_routes_times(schedules_api)
     return scheduled_times
@@ -96,13 +203,13 @@ def get_prediction_times(station: str, dir_code: str, vehicle_type: str) -> Dict
     """
     # The MBTA prediction api with variables added
     predictions_api = \
-    f"https://api-v3.mbta.com/predictions?filter[stop]=place-{station}&filter[direction_id]={dir_code}&include=stop&filter[route]=CR-Needham"
+        f"https://api-v3.mbta.com/predictions?filter[stop]=place-{station}&filter[direction_id]={dir_code}&include=stop&filter[route]=CR-Needham"
     # Gets the route times dictionary.  May be empty if there isn't one departing soon enough
     prediction_times = get_routes_times(predictions_api)
     return prediction_times
 
 
-def train_times(station: str, direction: str, vehicle_type: str) -> List[datetime.datetime]:
+def get_train_times(station: str, direction: str, vehicle_type: str) -> List[datetime.datetime]:
     """
     Retrieves the departure times of the wanted MBTA vehicle. Also replaces scheduled times with
     prediction times, if they exists.
@@ -132,122 +239,39 @@ def train_times(station: str, direction: str, vehicle_type: str) -> List[datetim
     return commuter_rail_times
 
 
-def clear_clock() -> None:
-    """
-    Clears the clock display.  Otherwise it stays on, even after the program runs
-    """
-    # Use I2C connection for clock display
-    i2c = board.I2C()
-    # Create a new display which clears the current display
-    display = Seg7x4(i2c)
-
-
-def clock_countdown_time(train_times: List[datetime.datetime], min_clock_display: int) -> Optional[str]:
-    """
-    Takes in the train departure times and finds the difference between the soonest departure and
-    now. Aslo has a minimum difference varaible so that if it takes a certain amount of time to walk
-    to station, to account for that and only display a countdown that is achievable to walk to.
-    :train_times: list of train departure times
-    :min_clock_display: the minimum difference to display in minutes
-    :return: Either the display countdown time or None if there isn't one within 99 minutes, the
-            display limit
-    """
-    # Retrieve current time to compare
-    now = datetime.datetime.now()
-    # Get the difference between the soonest train and now
-    train_num = 0
-    next_train = train_times[train_num] - now
-    # get the minutes for the display
-    next_train_minutes = next_train.seconds / 60
-    # While the difference is less than the minimum, use the next train/bus
-    while (next_train_minutes < min_clock_display) and train_num < len(train_times):
-        train_num += 1
-        next_train = train_times[train_num] - now
-        next_train_minutes = next_train.seconds / 60
-    # get seconds for the display
-    next_train_seconds = str(next_train.seconds % 60)
-    # make sure it is 0 padded
-    if len(next_train_seconds) == 1:
-        next_train_seconds = f"0{next_train_seconds}"
-    # make sure it is 0 padded
-    next_train_minutes = str(int(next_train_minutes))
-    if len(next_train_minutes) == 1:
-        next_train_minutes = f"0{next_train_minutes}"
-    # If minutes are not a length of 3 (too large for display)
-    if len(next_train_minutes) == 2 and (next_train.seconds/60) > min_clock_display:
-        # Return the display text
-        return f"{next_train_minutes}:{next_train_seconds}"
-    # Else return None
-    return None
-
-
-def display(times: List[datetime.datetime], screen_display,
-        clock_display, min_clock_display: int = 0) -> None:
-    """
-    Pulls in times and pushes the information to the clock and screen display
-    :times: list of departure times
-    :min_clock_display: the minimum difference in minutes to display on the countdown clock
-    """
-    # If there are departure times, continue
-    if len(times) > 0:
-        # Display times on the SPI sh1106 screen
-        with canvas(screen_display) as draw:
-            draw.rectangle(screen_display.bounding_box, outline="white", fill="black")
-            draw.text((25, 10), "Schedule: ", fill="white")
-            # For up to 3 train times, display their schedule
-            for x in range(min(3, len(times))):
-                train_num = x + 1
-                display_y = (train_num * 10) + 10
-                # Display train number and departure time
-                draw.text((25, display_y), f"{train_num}: {times[x].strftime('%H:%M')}", fill="white")
-        # Update coutdown clock every half second
-        for _ in range(10):
-            # Get the countdown display time
-            train_countdown = clock_countdown_time(times, min_clock_display)
-            # If a time is returned, display
-            if train_countdown is not None:
-                clock_display.print(train_countdown)
-            # Else clear the clock
-            else:
-                clear_clock()
-            # Pause for a half second
-            time.sleep(0.5)
-    else:
-        # If there are no predicted departures, display on screen
-        with canvas(screen_display) as draw:
-            draw.rectangle(screen_display.bounding_box, outline="white", fill="black")
-            draw.text((5, 30), "No Predicted Arrivals", fill="white")
-        # Pause for 5 seconds to not pull too often from API.  Same paus is achieved with countdown
-        # clock above
-        time.sleep(5)
-
-
 def main() -> None:
     # retrieve arguments
     script_args = arguments()
     # loop for retrieving new times and display.  Will try to adjust in the future to kill with a
     # different thread
-    # setup clock display
-    i2c = board.I2C()
-    clock_display = Seg7x4(i2c)
-    clock_display.brightness = 0.4
-    # Setup screen display
-    serial = spi()
-    screen_display = sh1106(serial)
     # get departure times
-    times = train_times(station=script_args.station, direction=script_args.direction, vehicle_type=script_args.type)
+    train_times = get_train_times(station=script_args.station,
+                                  direction=script_args.direction, vehicle_type=script_args.type)
     # display departure times and countdown on screen and clock
-    display(times, screen_display, clock_display)
+    clock_display = ht16k33_clock()
+    screen_display = sh1106_screen()
+    if len(train_times) != 0:
+        clock_display.display_time(train_times)
+        screen_display.display_time(train_times)
     for _ in range(20):
         # get departure times
         executor = concurrent.futures.ThreadPoolExecutor()
-        future = executor.submit(train_times, script_args.station, script_args.direction, script_args.type)
+        future = executor.submit(get_train_times, script_args.station,
+                                 script_args.direction, script_args.type)
         # display departure times and countdown on screen and clock
-        display(times, screen_display, clock_display)
+        if len(train_times) != 0:
+            screen_display.display_time(train_times)
+            for _ in range(20):
+                clock_display.display_time(train_times)
+                time.sleep(0.25)
+        else:
+            clock_display.clear_clock()
+            screen_display.clear_display()
         times = future.result()
         executor.shutdown(wait=False)
     # clear clock when done
-    clear_clock()
+    clock_display.clear_clock()
+    screen_display.clear_display()
 
 
 if __name__ == "__main__":
