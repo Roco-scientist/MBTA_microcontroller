@@ -8,8 +8,8 @@
 
 ## WARNING
 ### Crate not fully working
-### Making connection to the I2C interfaces still needs to be worked out
-A microntroller likely will not work well for this project because
+### Making connections to the I2C interfaces still needs to be worked out
+A microcontroller likely will not work well for this project because
 <ul>
 <li>Microcontrollers don't contain a clock for time, therefor there are no crates for getting the current time to compare to train time</li>
 <li>ESP8266 WiFi board does not yet communicate in Rust</li>
