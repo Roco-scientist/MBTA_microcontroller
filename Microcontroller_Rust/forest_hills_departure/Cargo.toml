@@ -11,12 +11,14 @@ edition = "2018"
 chrono = {version = "0.4", default-features = false}
 cortex-m = "0.6"
 cortex-m-rt = "0.6"
-cortex-m-rtfm = "0.5"
+cortex-m-rtic = "0.5"
 embedded-graphics = "0.6"
 embedded-hal = "0.2"
+f3 = "0.6"
 heapless = "0.5"
 ht16k33 = {version = "0.4", default-features = false}
 panic-halt = "0.2"
+panic-semihosting = "0.5"
 # reqwest = {version = "0.10.0-alpha.2", features = ["blocking", "json"]}
 # serde_json = "1.0"
 ssd1306 = "0.4"

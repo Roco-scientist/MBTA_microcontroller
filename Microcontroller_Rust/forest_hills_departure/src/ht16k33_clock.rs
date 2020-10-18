@@ -1,18 +1,28 @@
 #![no_std]
 extern crate chrono;
 extern crate cortex_m_rt;
+extern crate f3;
 extern crate heapless;
 extern crate ht16k33;
 extern crate panic_halt;
-extern crate stm32f3xx_hal;
+// extern crate stm32f3xx_hal;
 
+use f3::hal::{
+    gpio::{
+        gpiob::{PB6, PB7},
+        AF4,
+    },
+    i2c::I2c,
+    prelude::*,
+    stm32f30x::{self, I2C1},
+};
 use heapless::consts::*;
 use heapless::Vec;
-use stm32f3xx_hal::{i2c, prelude::*, stm32};
+// use stm32f3xx_hal::{i2c, prelude::*, stm32};
 
 /// A struct to hold the display along with the digits for each location
 pub struct ClockDisplay {
-    display: ht16k33::HT16K33<i2c::I2c<stm32::I2C1, (stm32::GPIOB, stm32::GPIOB)>>,
+    display: ht16k33::HT16K33<I2c<I2C1, (PB6<AF4>, PB7<AF4>)>>,
     number_leds: Vec<Vec<u8, U7>, U10>,
     minutes_ten: Option<u8>,
     minutes_single: Option<u8>,
@@ -24,7 +34,7 @@ pub struct ClockDisplay {
 impl ClockDisplay {
     /// Creates a new ClockDisplay struct
     pub fn new() -> ClockDisplay {
-        let dp = stm32::Peripherals::take().unwrap();
+        let dp = stm32f30x::Peripherals::take().unwrap();
 
         let mut flash = dp.FLASH.constrain();
         let mut rcc = dp.RCC.constrain();
@@ -33,10 +43,10 @@ impl ClockDisplay {
 
         let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
-        let scl = gpiob.pb14.into();
-        let sda = gpiob.pb15.into();
+        let scl = gpiob.pb6.into_af4(&mut gpiob.moder, &mut gpiob.afrl);
+        let sda = gpiob.pb7.into_af4(&mut gpiob.moder, &mut gpiob.afrl);
 
-        let i2c_master = i2c::I2c::i2c1(dp.I2C1, (scl, sda), 400_000.hz(), clocks, &mut rcc.apb1);
+        let i2c_master = I2c::i2c1(dp.I2C1, (scl, sda), 400_000.hz(), clocks, &mut rcc.apb1);
         // connect to the I2C address found within raspberry pi.  This is converted to decimal
         // actually 0x70 in hexidecimal which goes to 112
         let address = 112u8;
@@ -171,14 +181,14 @@ impl ClockDisplay {
     fn display_nums(&mut self) -> () {
         // Retrieve a vec! of leds that need to be turned on for the numbers
         // Then turn them on
-        let leds = self.number_leds[self.minutes_ten.unwrap() as usize];
-        self.switch_leds(&leds, 0, true);
-        let leds = self.number_leds[self.minutes_single.unwrap() as usize];
-        self.switch_leds(&leds, 2, true);
-        let leds = self.number_leds[self.seconds_ten.unwrap() as usize];
-        self.switch_leds(&leds, 6, true);
-        let leds = self.number_leds[self.seconds_single.unwrap() as usize];
-        self.switch_leds(&leds, 8, true);
+        let leds = &self.number_leds[self.minutes_ten.unwrap() as usize];
+        self.switch_leds(&leds.clone(), 0, true);
+        let leds = &self.number_leds[self.minutes_single.unwrap() as usize];
+        self.switch_leds(&leds.clone(), 2, true);
+        let leds = &self.number_leds[self.seconds_ten.unwrap() as usize];
+        self.switch_leds(&leds.clone(), 6, true);
+        let leds = &self.number_leds[self.seconds_single.unwrap() as usize];
+        self.switch_leds(&leds.clone(), 8, true);
         self.display_colon(true);
     }
 
@@ -212,10 +222,10 @@ impl ClockDisplay {
             _ => panic!("location not recognized"),
         };
         // get the leds for the new number
-        let new_leds = self.number_leds[*new_number as usize];
+        let new_leds = &self.number_leds[*new_number as usize];
         if let Some(old_number) = old_number_option {
             // get the leds for th old number
-            let old_leds = self.number_leds[old_number as usize];
+            let old_leds = &self.number_leds[old_number as usize];
             // get what leds are in the old number and not the new to then be able to turn off
             let leds_off = old_leds
                 .iter()
@@ -245,7 +255,7 @@ impl ClockDisplay {
             // turn on leds
             self.switch_leds(&leds_on, location, true)
         } else {
-            self.switch_leds(&new_leds, location, true)
+            self.switch_leds(&new_leds.clone(), location, true)
         }
     }
 }
