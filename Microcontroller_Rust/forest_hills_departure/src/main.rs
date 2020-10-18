@@ -8,15 +8,18 @@ extern crate cortex_m_rt;
 #[macro_use]
 extern crate cortex_m_rtfm;
 extern crate cortex_m;
+extern crate heapless;
 extern crate stm32f3xx_hal;
 
-use chrono::{prelude::*, DateTime, Local};
+use chrono::{prelude::*, DateTime};
 use core::{cell::Cell, time::Duration};
 use cortex_m_rtfm::{Resource, TMax, C1, P0, P1, T0, T1};
 use forest_hills_departure;
+use heapless::{consts::*, Vec};
 use stm32f3xx_hal::delay;
 
-static TRAIN_TIMES: Resource<Cell<Option<Vec<DateTime<Local>>>>, C1>;
+static TRAIN_TIMES: Resource<Cell<Option<Vec<chrono::NaiveTime, U10>>>, C1>;
+static NOW: Resource<Cell<chrono::NaiveTime>, C1>;
 static mut DELAY: delay::Delay;
 
 // setup multitasking on microcontroller
@@ -33,8 +36,13 @@ display_times: Task{
 });
 
 fn init(priority: P0, threshold: &TMax) {
-    let now_plus_5 = Local::now() + Duration::from_secs(300u64);
-    let TRAIN_TIMES = Some(vec![now_plus_5]);
+    let now_plus_5 = chrono::NaiveTime::from_hms(12, 32, 30);
+    let mut train_vec: Vec<chrono::NaiveTime, U10> = Vec::new();
+    train_vec.push(now_plus_5);
+    threshold.raise(&TRAIN_TIMES, |threshold: T1| {
+        let train_times = TRAIN_TIMES.access(&priority, threshold);
+        train_times.set(Some(train_vec));
+    });
     let cp = cortex_m::Peripherals::take().unwrap();
     let dp = stm32f3xx_hal::Peripherals::take().unwrap();
     let mut flash = dp.FLASH.constrain();
@@ -56,10 +64,13 @@ fn get_trains(priority: P0, threshold: T1) {
         unsafe { DELAY.delay_ms(60_000u16) };
         // let new_train_times = forest_hills_departure::train_time::train_times()
         //     .unwrap_or_else(|err| panic!("{:?}", err));
+        let now;
+        threshold.raise(&NOW, |threshold: &T2| {
+            now = NOW.access(&priority, threshold);
+        });
         threshold.raise(&TRAIN_TIMES, |threshold: &T2| {
-            let now = Local.now();
             let train_times = TRAIN_TIMES.access(&priority, threshold);
-            if now < train_times.get()[0] {
+            if now > train_times.get()[0] {
                 now_plus_5 = now + Duration::from_secs(300u64);
                 train_times.set(now_plus_5);
             }

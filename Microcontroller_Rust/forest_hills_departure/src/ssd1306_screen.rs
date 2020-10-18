@@ -2,33 +2,28 @@
 extern crate chrono;
 extern crate cortex_m_rt;
 extern crate embedded_graphics;
+extern crate heapless;
 extern crate panic_halt;
 extern crate ssd1306; // Crate for current I2C oled display
 extern crate stm32f3xx_hal;
 
-use chrono::{DateTime, Local};
-use cortex_m_rt::{entry, exception, ExceptionFrame};
 use embedded_graphics::{
     fonts::{Font12x16, Text},
     pixelcolor::BinaryColor,
     prelude::*,
     style::TextStyleBuilder,
 };
-use panic_halt as _;
+use heapless::{consts::*, Vec};
 use ssd1306::{prelude::*, Builder, I2CDIBuilder};
-use stm32f3xx_hal::{
-    i2c::{BlockingI2c, DutyCycle, Mode},
-    prelude::*,
-    stm32,
-};
+use stm32f3xx_hal::{i2c, prelude::*, stm32};
 
 /// Structure that contains screen information
 pub struct ScreenDisplay {
-    display: GraphicsMode<I2CInterface<i2c::I2c>>,
+    display: GraphicsMode<I2CInterface<i2c::I2c<stm32::I2C2, (stm32::GPIOB, stm32::GPIOB)>>>,
     // the closest train time
-    train1: Option<DateTime<Local>>,
+    train1: Option<chrono::NaiveTime>,
     // the second closest train time
-    train2: Option<DateTime<Local>>,
+    train2: Option<chrono::NaiveTime>,
 }
 
 // functions to initialize and change screen display
@@ -42,28 +37,12 @@ impl ScreenDisplay {
 
         let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-        let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
+        let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
-        let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
+        let scl = gpiob.pb9.into();
+        let sda = gpiob.pb10.into();
 
-        let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-        let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
-
-        let i2c = BlockingI2c::i2c1(
-            dp.I2C1,
-            (scl, sda),
-            &mut afio.mapr,
-            Mode::Fast {
-                frequency: 400_000.hz(),
-                duty_cycle: DutyCycle::Ratio2to1,
-            },
-            clocks,
-            &mut rcc.apb1,
-            1000,
-            10,
-            1000,
-            1000,
-        );
+        let i2c = i2c::I2c::i2c2(dp.I2C2, (scl, sda), 400_000.hz(), clocks, &mut rcc.apb1);
 
         // creates an interface that connects to I2c
         let interface = I2CDIBuilder::new().init(i2c);
@@ -79,7 +58,7 @@ impl ScreenDisplay {
     }
 
     /// Displays train1 and train2 on the screen display
-    pub fn display_trains(&mut self, train_times: &Vec<DateTime<Local>>) -> () {
+    pub fn display_trains(&mut self, train_times: &Vec<chrono::NaiveTime, U10>) -> () {
         // create a variable to test whether or not the screen needs to be updated
         let mut update_screen = false;
         // if train1 is different than nearest train, replace with nearest train and update later
