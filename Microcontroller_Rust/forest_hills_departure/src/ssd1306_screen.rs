@@ -2,24 +2,36 @@
 extern crate chrono;
 extern crate cortex_m_rt;
 extern crate embedded_graphics;
+extern crate f3;
 extern crate heapless;
 extern crate panic_halt;
 extern crate ssd1306; // Crate for current I2C oled display
-extern crate stm32f3xx_hal;
+                      // extern crate stm32f3xx_hal;
 
+use chrono::prelude::*;
+use core::fmt::Write;
 use embedded_graphics::{
     fonts::{Font12x16, Text},
     pixelcolor::BinaryColor,
     prelude::*,
     style::TextStyleBuilder,
 };
-use heapless::{consts::*, Vec};
+use f3::hal::{
+    gpio::{
+        gpiob::{PB6, PB7},
+        AF4,
+    },
+    i2c::I2c,
+    prelude::*,
+    stm32f30x::{self, I2C1},
+};
+use heapless::{consts::*, String, Vec};
 use ssd1306::{prelude::*, Builder, I2CDIBuilder};
-use stm32f3xx_hal::{i2c, prelude::*, stm32};
+// use stm32f3xx_hal::{i2c, prelude::*, stm32};
 
 /// Structure that contains screen information
 pub struct ScreenDisplay {
-    display: GraphicsMode<I2CInterface<i2c::I2c<stm32::I2C2, (stm32::GPIOB, stm32::GPIOB)>>>,
+    display: GraphicsMode<I2CInterface<I2c<I2C1, (PB6<AF4>, PB7<AF4>)>>>,
     // the closest train time
     train1: Option<chrono::NaiveTime>,
     // the second closest train time
@@ -30,7 +42,7 @@ pub struct ScreenDisplay {
 impl ScreenDisplay {
     /// Initializes a new screen display with empty train times
     pub fn new() -> ScreenDisplay {
-        let dp = stm32::Peripherals::take().unwrap();
+        let dp = stm32f30x::Peripherals::take().unwrap();
 
         let mut flash = dp.FLASH.constrain();
         let mut rcc = dp.RCC.constrain();
@@ -39,10 +51,10 @@ impl ScreenDisplay {
 
         let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
-        let scl = gpiob.pb9.into();
-        let sda = gpiob.pb10.into();
+        let scl = gpiob.pb6.into_af4(&mut gpiob.moder, &mut gpiob.afrl);
+        let sda = gpiob.pb7.into_af4(&mut gpiob.moder, &mut gpiob.afrl);
 
-        let i2c = i2c::I2c::i2c2(dp.I2C2, (scl, sda), 400_000.hz(), clocks, &mut rcc.apb1);
+        let i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400_000.hz(), clocks, &mut rcc.apb1);
 
         // creates an interface that connects to I2c
         let interface = I2CDIBuilder::new().init(i2c);
@@ -86,7 +98,10 @@ impl ScreenDisplay {
                 .build();
             // if there is a train1, display train time
             if let Some(train1) = self.train1 {
-                let time = train1.format("%H:%M").to_string();
+                let time_hour = train1.hour();
+                let time_minute = train1.minute();
+                let mut time = String::<U32>::from("");
+                let _ = write!(time, "{}:{}", time_hour, time_minute);
                 // creates text buffer
                 Text::new(&time, Point::new(35, 5))
                     .into_styled(text_style)
@@ -97,7 +112,10 @@ impl ScreenDisplay {
             }
             // if there is a train2, display train time
             if let Some(train2) = self.train2 {
-                let time = train2.format("%H:%M").to_string();
+                let time_hour = train2.hour();
+                let time_minute = train2.minute();
+                let mut time = String::<U32>::from("");
+                let _ = write!(time, "{}:{}", time_hour, time_minute);
                 // creats text buffer
                 Text::new(&time, Point::new(35, 25))
                     .into_styled(text_style)
