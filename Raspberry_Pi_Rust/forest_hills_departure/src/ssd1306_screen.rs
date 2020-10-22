@@ -35,11 +35,11 @@ impl ScreenDisplay {
         let mut disp: GraphicsMode<_> = Builder::new().connect(interface).into();
         // initializes the display
         disp.init()?;
-        return ScreenDisplay {
+        Ok(ScreenDisplay {
             display: disp,
             train1: None,
             train2: None,
-        };
+        })
     }
 
     /// Displays train1 and train2 on the screen display
