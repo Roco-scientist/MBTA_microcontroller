@@ -1,6 +1,8 @@
+extern crate rppal;
 extern crate std;
 
 use forest_hills_departure;
+use rppal::gpio;
 use std::{
     sync::{Arc, Mutex},
     thread, time,
@@ -19,7 +21,7 @@ fn main() {
     let mut screen = forest_hills_departure::ssd1306_screen::ScreenDisplay::new();
     // clone the train_times to pass into thread
     let train_times_clone = Arc::clone(&train_times_option);
-    // Find train times every minute and replace train_times with new value
+    // In a new thread find train times every minute and replace train_times with new value
     thread::spawn(move || loop {
         thread::sleep(time::Duration::from_secs(60));
         let new_train_times = forest_hills_departure::train_time::train_times()
@@ -29,7 +31,7 @@ fn main() {
     });
     // continually update screen and clock every 0.25 seconds
     loop {
-        thread::sleep(time::Duration::from_micros(250));
+        thread::sleep(time::Duration::from_millis(250));
         // access and lock train times
         let train_times_unlocked = train_times_option.lock().unwrap();
         // if there are some train times, display on clock and screen
