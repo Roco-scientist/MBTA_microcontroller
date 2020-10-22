@@ -44,29 +44,24 @@ pub struct ClockDisplay {
 // Functions to initialize and change clock display
 impl ClockDisplay {
     /// Creates a new ClockDisplay struct
-    pub fn new() -> ClockDisplay {
+    pub fn new(address: u8) -> Result<ClockDisplay, Box<dyn std::error::Error>> {
         // create new i2c interface
-        let i2c = I2c::new().unwrap();
-        // connect to the I2C address found within raspberry pi.  This is converted to decimal
-        // actually 0x70 in hexidecimal which goes to 112
-        let address = 112u8;
+        let i2c = I2c::new()?;
         // connect the ht16k33 clock chip to i2c connection on the address
         let mut clock = ht16k33::HT16K33::new(i2c, address);
-        clock.initialize().unwrap();
+        clock.initialize()?;
         // turn clock display on.  Would not work otherwise
-        clock.set_display(ht16k33::Display::ON).unwrap();
+        clock.set_display(ht16k33::Display::ON)?;
         // set the dimming of the display.  This can be added to new function later
-        clock
-            .set_dimming(ht16k33::Dimming::from_u8(7u8).unwrap())
-            .unwrap();
+        clock.set_dimming(ht16k33::Dimming::from_u8(7u8)?)?;
         // return ClockDisplay struct with empty digits to be filled later
-        ClockDisplay {
+        Ok(ClockDisplay {
             display: clock,
             minutes_ten: None,
             minutes_single: None,
             seconds_ten: None,
             seconds_single: None,
-        }
+        })
     }
 
     /// Dispalys the minutes:seconds until the next train on the clock display
@@ -74,7 +69,7 @@ impl ClockDisplay {
         &mut self,
         train_times: &Vec<chrono::DateTime<Local>>,
         minimum_display_min: &i64,
-    ) -> () {
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // get now time in UTC
         let now = chrono::Local::now();
         // get the difference between now and the train time
@@ -85,7 +80,7 @@ impl ClockDisplay {
                 diff = train_times[1].signed_duration_since(now)
             } else {
                 // if there is not a next train, clear display and end
-                self.clear_display();
+                self.clear_display()?;
                 return ();
             }
         }
@@ -118,34 +113,34 @@ impl ClockDisplay {
                 self.minutes_single = Some(second);
                 self.seconds_ten = Some(third);
                 self.seconds_single = Some(fourth);
-                self.display_nums();
+                self.display_nums()?;
             } else {
                 // else change only the values that have changed
                 if Some(first) != self.minutes_ten {
-                    self.change_number(0, &first);
+                    self.change_number(0, &first)?;
                     self.minutes_ten = Some(first);
                 }
                 if Some(second) != self.minutes_single {
-                    self.change_number(2, &second);
+                    self.change_number(2, &second)?;
                     self.minutes_single = Some(second);
                 }
                 if Some(third) != self.seconds_ten {
-                    self.change_number(6, &third);
+                    self.change_number(6, &third)?;
                     self.seconds_ten = Some(third);
                 }
                 if Some(fourth) != self.seconds_single {
-                    self.change_number(8, &fourth);
+                    self.change_number(8, &fourth)?;
                     self.seconds_single = Some(fourth);
                 }
             }
         } else {
             // if minutes is greater than 100 clear dispaly and set all values to none
-            self.clear_display();
-        }
+            self.clear_display()?;
+        };
     }
 
     /// Clears clock display
-    pub fn clear_display(&mut self) -> () {
+    pub fn clear_display(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         //set all values to None
         self.minutes_ten = None;
         self.minutes_single = None;
@@ -153,45 +148,64 @@ impl ClockDisplay {
         self.seconds_single = None;
         // clear the display buffer then push to clock to create a clear clock
         self.display.clear_display_buffer();
-        self.display.write_display_buffer().unwrap();
+        self.display.write_display_buffer()?;
     }
 
     /// Turns on all numbers
-    fn display_nums(&mut self) -> () {
+    fn display_nums(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         // Retrieve a vec! of leds that need to be turned on for the numbers
         // Then turn them on
-        let leds = NUMBER_LEDS.get(&self.minutes_ten.unwrap()).unwrap();
-        self.switch_leds(leds, 0, true);
-        let leds = NUMBER_LEDS.get(&self.minutes_single.unwrap()).unwrap();
-        self.switch_leds(leds, 2, true);
-        let leds = NUMBER_LEDS.get(&self.seconds_ten.unwrap()).unwrap();
-        self.switch_leds(leds, 6, true);
-        let leds = NUMBER_LEDS.get(&self.seconds_single.unwrap()).unwrap();
-        self.switch_leds(leds, 8, true);
-        self.display_colon(true);
+        if let Some(minutes_ten) = self.minutes_ten {
+            let leds = NUMBER_LEDS.get(&minutes_ten)?;
+            self.switch_leds(leds, 0, true)?;
+        }
+        if let Some(minutes_single) = self.minutes_single {
+            let leds = NUMBER_LEDS.get(&minutes_single)?;
+            self.switch_leds(leds, 2, true)?;
+        }
+        if let Some(seconds_ten) = self.seconds_ten {
+            let leds = NUMBER_LEDS.get(&seconds_ten)?;
+            self.switch_leds(leds, 6, true)?;
+        }
+        if let Some(seconds_single) = self.seconds_single {
+            let leds = NUMBER_LEDS.get(&seconds_single)?;
+            self.switch_leds(leds, 8, true)?;
+        }
+        self.display_colon(true)?;
     }
 
     /// Turns on/off the necessary leds for a number at the indicated location
-    fn switch_leds(&mut self, leds: &Vec<u8>, location: u8, on: bool) -> () {
+    fn switch_leds(
+        &mut self,
+        leds: &Vec<u8>,
+        location: u8,
+        on: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Turn on/off each led
         for led in leds {
-            let led_location = ht16k33::LedLocation::new(location, *led).unwrap();
-            self.display.set_led(led_location, on).unwrap();
+            let led_location = ht16k33::LedLocation::new(location, *led)?;
+            self.display.set_led(led_location, on)?;
         }
+        Ok(())
     }
 
     /// Turns on/off the colon between the digits for the clock
-    fn display_colon(&mut self, on: bool) -> () {
+    fn display_colon(&mut self, on: bool) -> Result<(), Box<dyn std::error::Error>> {
         let leds = vec![0u8, 1u8];
         // Turn on/off each led
         for led in leds {
             // colon is located at location 4, with leds 1,2
-            let led_location = ht16k33::LedLocation::new(4u8, led).unwrap();
-            self.display.set_led(led_location, on).unwrap();
+            let led_location = ht16k33::LedLocation::new(4u8, led)?;
+            self.display.set_led(led_location, on)?;
         }
+        Ok(())
     }
 
-    fn change_number(&mut self, location: u8, new_number: &u8) {
+    fn change_number(
+        &mut self,
+        location: u8,
+        new_number: &u8,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // determine which struct digit to pull based on led location
         let old_number_option = match location {
             0u8 => self.minutes_ten,
@@ -201,10 +215,10 @@ impl ClockDisplay {
             _ => panic!("location not recognized"),
         };
         // get the leds for the new number
-        let new_leds = NUMBER_LEDS.get(new_number).unwrap();
+        let new_leds = NUMBER_LEDS.get(new_number)?;
         if let Some(old_number) = old_number_option {
             // get the leds for th old number
-            let old_leds = NUMBER_LEDS.get(&old_number).unwrap();
+            let old_leds = NUMBER_LEDS.get(&old_number)?;
             // get what leds are in the old number and not the new to then be able to turn off
             let leds_off = old_leds
                 .iter()
@@ -230,11 +244,11 @@ impl ClockDisplay {
                 })
                 .collect::<Vec<u8>>();
             // turn off leds
-            self.switch_leds(&leds_off, location, false);
+            self.switch_leds(&leds_off, location, false)?;
             // turn on leds
-            self.switch_leds(&leds_on, location, true)
+            self.switch_leds(&leds_on, location, true)?
         } else {
-            self.switch_leds(new_leds, location, true)
-        }
+            self.switch_leds(new_leds, location, true)?
+        };
     }
 }
