@@ -44,12 +44,9 @@ pub struct ClockDisplay {
 // Functions to initialize and change clock display
 impl ClockDisplay {
     /// Creates a new ClockDisplay struct
-    pub fn new() -> ClockDisplay {
+    pub fn new(address: u8) -> ClockDisplay {
         // create new i2c interface
         let i2c = I2c::new().unwrap();
-        // connect to the I2C address found within raspberry pi.  This is converted to decimal
-        // actually 0x70 in hexidecimal which goes to 112
-        let address = 112u8;
         // connect the ht16k33 clock chip to i2c connection on the address
         let mut clock = ht16k33::HT16K33::new(i2c, address);
         clock.initialize().unwrap();

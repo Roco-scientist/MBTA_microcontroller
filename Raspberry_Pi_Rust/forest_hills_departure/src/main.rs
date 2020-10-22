@@ -16,9 +16,9 @@ fn main() {
         forest_hills_departure::train_time::train_times().unwrap_or_else(|err| panic!("{:?}", err)),
     ));
     // create a new clock struct, this initializes the display
-    let mut clock = forest_hills_departure::ht16k33_clock::ClockDisplay::new();
+    let mut clock = forest_hills_departure::ht16k33_clock::ClockDisplay::new(0x70);
     // create a new screen struct, this initializes the display
-    let mut screen = forest_hills_departure::ssd1306_screen::ScreenDisplay::new();
+    let mut screen = forest_hills_departure::ssd1306_screen::ScreenDisplay::new(0x51);
     // clone the train_times to pass into thread
     let train_times_clone = Arc::clone(&train_times_option);
     // In a new thread find train times every minute and replace train_times with new value
