@@ -25,24 +25,28 @@ pub struct ScreenDisplay {
 // functions to initialize and change screen display
 impl ScreenDisplay {
     /// Initializes a new screen display with empty train times
-    pub fn new() -> ScreenDisplay {
+    pub fn new(address: u16) -> Result<ScreenDisplay, Box<dyn std::error::Error>> {
         // bus4 I2c connection information
-        let i2c4 = i2c::I2c::with_bus(4u8).unwrap();
+        let mut i2c = i2c::I2c::new()?;
+        i2c.set_slave_address(address)?;
         // creates an interface that connects to I2c
-        let interface = I2CDIBuilder::new().init(i2c4);
+        let interface = I2CDIBuilder::new().init(i2c);
         // creates a new display connected to the interfce
         let mut disp: GraphicsMode<_> = Builder::new().connect(interface).into();
         // initializes the display
         disp.init().unwrap();
-        return ScreenDisplay {
+        Ok(ScreenDisplay {
             display: disp,
             train1: None,
             train2: None,
-        };
+        })
     }
 
     /// Displays train1 and train2 on the screen display
-    pub fn display_trains(&mut self, train_times: &Vec<DateTime<Local>>) -> () {
+    pub fn display_trains(
+        &mut self,
+        train_times: &Vec<DateTime<Local>>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // create a variable to test whether or not the screen needs to be updated
         let mut update_screen = false;
         // if train1 is different than nearest train, replace with nearest train and update later
@@ -63,7 +67,7 @@ impl ScreenDisplay {
         }
         // if train times were different than what's on the display, update display
         if update_screen {
-            self.clear_display(false);
+            self.clear_display(false)?;
             // create a new text style for the screen with chosen font
             let text_style = TextStyleBuilder::new(Font12x16)
                 .text_color(BinaryColor::On)
@@ -74,8 +78,7 @@ impl ScreenDisplay {
                 // creates text buffer
                 Text::new(&time, Point::new(35, 5))
                     .into_styled(text_style)
-                    .draw(&mut self.display)
-                    .unwrap();
+                    .draw(&mut self.display).unwrap();
                 // displays text buffer
                 self.display.flush().unwrap();
             }
@@ -85,16 +88,16 @@ impl ScreenDisplay {
                 // creats text buffer
                 Text::new(&time, Point::new(35, 25))
                     .into_styled(text_style)
-                    .draw(&mut self.display)
-                    .unwrap();
+                    .draw(&mut self.display).unwrap();
                 // displays text buffer
                 self.display.flush().unwrap();
             }
         }
+        Ok(())
     }
 
     /// Function to clear screen display
-    pub fn clear_display(&mut self, reset_trains:bool) -> () {
+    pub fn clear_display(&mut self, reset_trains: bool) -> Result<(), Box<dyn std::error::Error>> {
         if reset_trains {
             self.train1 = None;
             self.train2 = None;
@@ -103,5 +106,6 @@ impl ScreenDisplay {
         self.display.clear();
         // sends cleared buffer to screen to refresh
         self.display.flush().unwrap();
+        Ok(())
     }
 }
