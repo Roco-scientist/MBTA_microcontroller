@@ -34,7 +34,8 @@ impl ScreenDisplay {
         // creates a new display connected to the interfce
         let mut disp: GraphicsMode<_> = Builder::new().connect(interface).into();
         // initializes the display
-        disp.init()?;
+        disp.init()
+            .unwrap_or_else(|err| panic!("ERROR - display init - {}", err));
         Ok(ScreenDisplay {
             display: disp,
             train1: None,
@@ -46,7 +47,7 @@ impl ScreenDisplay {
     pub fn display_trains(
         &mut self,
         train_times: &Vec<DateTime<Local>>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn ssd1306::Error>> {
         // create a variable to test whether or not the screen needs to be updated
         let mut update_screen = false;
         // if train1 is different than nearest train, replace with nearest train and update later
@@ -93,10 +94,11 @@ impl ScreenDisplay {
                 self.display.flush()?;
             }
         }
+        Ok(())
     }
 
     /// Function to clear screen display
-    pub fn clear_display(&mut self, reset_trains: bool) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn clear_display(&mut self, reset_trains: bool) -> Result<(), Box<dyn ssd1306::Error>> {
         if reset_trains {
             self.train1 = None;
             self.train2 = None;

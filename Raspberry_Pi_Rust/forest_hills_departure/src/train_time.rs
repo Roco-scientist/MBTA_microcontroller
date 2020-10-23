@@ -23,7 +23,7 @@ pub fn train_times() -> Result<Option<Vec<DateTime<Local>>>, Box<dyn std::error:
     if let Some(pred_times) = prediction_times {
         for key in pred_times.keys() {
             if scheduled_times.keys().any(|schud_key| schud_key == key) {
-                *scheduled_times.get_mut(key)? = pred_times[key]
+                *scheduled_times.get_mut(key).unwrap() = pred_times[key]
             } else {
                 scheduled_times.insert(key.clone(), pred_times[key]);
             }
