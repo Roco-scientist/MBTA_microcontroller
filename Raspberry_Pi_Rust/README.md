@@ -14,12 +14,9 @@
 <tr><th>Label</th><th>Desc</th><th>RasPin</th><th>RasDesc</th></tr>
 <tr><td>GND</td><td>Ground</td><td>6</td><td>Ground</td></tr>
 <tr><td>VCC</td><td>3.3 V</td><td>1</td><td>3.3 Volts</td></tr>
-<tr><td>SDA</td><td>SDA</td><td>38</td><td>GPIO20</td></tr>
-<tr><td>SCL</td><td>SCL</td><td>40</td><td>GPIO21</td></tr>
+<tr><td>SDA</td><td>I2C SDA</td><td>3</td><td>GPIO2 (SDA)</td></tr>
+<tr><td>SCL</td><td>I2C SCL</td><td>5</td><td>GPIO3 (SCL)</td></tr>
 </table>
-
-The following line needs to be added to /boot/config.txt in order to enable another I2C bus<br>
-`dtoverlay=i2c-gpio,bus=4,i2c_gpio_delay_us=1,i2c_gpio_sda=23,i2c_gpio_scl=24`
 
 ### Clock display
 https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack-python-wiring-and-setup
