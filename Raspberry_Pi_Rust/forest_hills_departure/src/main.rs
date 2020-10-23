@@ -2,7 +2,7 @@ extern crate rppal;
 extern crate std;
 
 use forest_hills_departure;
-use rppal::gpio;
+// use rppal::gpio;
 use std::{
     sync::{Arc, Mutex},
     thread, time,
@@ -20,7 +20,7 @@ fn main() {
     let mut clock = forest_hills_departure::ht16k33_clock::ClockDisplay::new(0x70)
         .unwrap_or_else(|err| panic!("ERROR - ClockDisplay - {}", err));
     // create a new screen struct, this initializes the display
-    let mut screen = forest_hills_departure::ssd1306_screen::ScreenDisplay::new(0x51)
+    let mut screen = forest_hills_departure::ssd1306_screen::ScreenDisplay::new(0x3c)
         .unwrap_or_else(|err| panic!("ERROR - ScreenDisplay - {}", err));
     // clone the train_times to pass into thread
     let train_times_clone = Arc::clone(&train_times_option);

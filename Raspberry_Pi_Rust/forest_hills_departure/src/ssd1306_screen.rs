@@ -34,8 +34,7 @@ impl ScreenDisplay {
         // creates a new display connected to the interfce
         let mut disp: GraphicsMode<_> = Builder::new().connect(interface).into();
         // initializes the display
-        disp.init()
-            .unwrap_or_else(|err| panic!("ERROR - display init - {}", err));
+        disp.init().unwrap();
         Ok(ScreenDisplay {
             display: disp,
             train1: None,
@@ -47,7 +46,7 @@ impl ScreenDisplay {
     pub fn display_trains(
         &mut self,
         train_times: &Vec<DateTime<Local>>,
-    ) -> Result<(), Box<dyn ssd1306::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // create a variable to test whether or not the screen needs to be updated
         let mut update_screen = false;
         // if train1 is different than nearest train, replace with nearest train and update later
@@ -68,7 +67,7 @@ impl ScreenDisplay {
         }
         // if train times were different than what's on the display, update display
         if update_screen {
-            self.clear_display(false);
+            self.clear_display(false)?;
             // create a new text style for the screen with chosen font
             let text_style = TextStyleBuilder::new(Font12x16)
                 .text_color(BinaryColor::On)
@@ -79,9 +78,9 @@ impl ScreenDisplay {
                 // creates text buffer
                 Text::new(&time, Point::new(35, 5))
                     .into_styled(text_style)
-                    .draw(&mut self.display)?;
+                    .draw(&mut self.display).unwrap();
                 // displays text buffer
-                self.display.flush()?;
+                self.display.flush().unwrap();
             }
             // if there is a train2, display train time
             if let Some(train2) = self.train2 {
@@ -89,16 +88,16 @@ impl ScreenDisplay {
                 // creats text buffer
                 Text::new(&time, Point::new(35, 25))
                     .into_styled(text_style)
-                    .draw(&mut self.display)?;
+                    .draw(&mut self.display).unwrap();
                 // displays text buffer
-                self.display.flush()?;
+                self.display.flush().unwrap();
             }
         }
         Ok(())
     }
 
     /// Function to clear screen display
-    pub fn clear_display(&mut self, reset_trains: bool) -> Result<(), Box<dyn ssd1306::Error>> {
+    pub fn clear_display(&mut self, reset_trains: bool) -> Result<(), Box<dyn std::error::Error>> {
         if reset_trains {
             self.train1 = None;
             self.train2 = None;
@@ -106,6 +105,7 @@ impl ScreenDisplay {
         // clears the buffer
         self.display.clear();
         // sends cleared buffer to screen to refresh
-        self.display.flush()?;
+        self.display.flush().unwrap();
+        Ok(())
     }
 }

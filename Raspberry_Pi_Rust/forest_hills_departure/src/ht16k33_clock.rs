@@ -137,6 +137,7 @@ impl ClockDisplay {
             // if minutes is greater than 100 clear dispaly and set all values to none
             self.clear_display()?;
         };
+        return Ok(())
     }
 
     /// Clears clock display
