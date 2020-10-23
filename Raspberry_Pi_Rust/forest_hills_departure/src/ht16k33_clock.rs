@@ -81,7 +81,7 @@ impl ClockDisplay {
             } else {
                 // if there is not a next train, clear display and end
                 self.clear_display()?;
-                return ();
+                return Ok(());
             }
         }
         // separate out minutes and seconds for the display
@@ -149,6 +149,7 @@ impl ClockDisplay {
         // clear the display buffer then push to clock to create a clear clock
         self.display.clear_display_buffer();
         self.display.write_display_buffer()?;
+        Ok(())
     }
 
     /// Turns on all numbers
@@ -156,22 +157,23 @@ impl ClockDisplay {
         // Retrieve a vec! of leds that need to be turned on for the numbers
         // Then turn them on
         if let Some(minutes_ten) = self.minutes_ten {
-            let leds = NUMBER_LEDS.get(&minutes_ten)?;
+            let leds = NUMBER_LEDS.get(&minutes_ten).unwrap();
             self.switch_leds(leds, 0, true)?;
         }
         if let Some(minutes_single) = self.minutes_single {
-            let leds = NUMBER_LEDS.get(&minutes_single)?;
+            let leds = NUMBER_LEDS.get(&minutes_single).unwrap();
             self.switch_leds(leds, 2, true)?;
         }
         if let Some(seconds_ten) = self.seconds_ten {
-            let leds = NUMBER_LEDS.get(&seconds_ten)?;
+            let leds = NUMBER_LEDS.get(&seconds_ten).unwrap();
             self.switch_leds(leds, 6, true)?;
         }
         if let Some(seconds_single) = self.seconds_single {
-            let leds = NUMBER_LEDS.get(&seconds_single)?;
+            let leds = NUMBER_LEDS.get(&seconds_single).unwrap();
             self.switch_leds(leds, 8, true)?;
         }
         self.display_colon(true)?;
+        return Ok(());
     }
 
     /// Turns on/off the necessary leds for a number at the indicated location
@@ -215,10 +217,10 @@ impl ClockDisplay {
             _ => panic!("location not recognized"),
         };
         // get the leds for the new number
-        let new_leds = NUMBER_LEDS.get(new_number)?;
+        let new_leds = NUMBER_LEDS.get(new_number).unwrap();
         if let Some(old_number) = old_number_option {
             // get the leds for th old number
-            let old_leds = NUMBER_LEDS.get(&old_number)?;
+            let old_leds = NUMBER_LEDS.get(&old_number).unwrap();
             // get what leds are in the old number and not the new to then be able to turn off
             let leds_off = old_leds
                 .iter()
@@ -250,5 +252,6 @@ impl ClockDisplay {
         } else {
             self.switch_leds(new_leds, location, true)?
         };
+        return Ok(());
     }
 }
