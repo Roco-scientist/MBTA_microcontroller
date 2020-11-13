@@ -12,3 +12,5 @@ it does not seem to be a good fit for bare metal embedding where local time does
 For the microcontroller, I've included the Rust code up to the point where I gave up.  It is not fully functional though.<br>
 <br>
 I may come back to this with a DS3231 RTC module and an ESP8266 WiFi module.
+
+![ "" ](./Raspberry_Pi_Python/IMG_20200924_103744146_small.jpg)
