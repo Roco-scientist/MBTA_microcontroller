@@ -5,6 +5,7 @@
 <li>ssd1306 display with I2C connection (SPI would not connect with Rust crates). <a href=https://www.amazon.com/IZOKEE-Display-SSD1306-Raspberry-White-IIC/dp/B076PDVFQD/>Can be purchased here</a></li>
 <li>7 segment clock display.  Adafruit 0.56" 4-Digit 7-Segment Display w/I2C Backpack. <a href=https://www.adafruit.com/product/3400>Can be purchased here</a></li>
 <li> Misc. electronics for prototyping: bread board, wiring, multimeter etc.</li>
+<li>OpenSSL installed on Raspberry Pi</li>
 </ul>
 
 ## Connections
@@ -29,6 +30,7 @@ https://learn.adafruit.com/adafruit-led-backpack/0-dot-56-seven-segment-backpack
 </table>
 
 ## How to run
+`sudo apt-get install libssl-dev`<br>
 `cargo build` or `cargo build --release`<br>
 `./target/debug/forest_hills_departure`
 ### WARNING
