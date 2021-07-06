@@ -10,7 +10,7 @@ use std::{
 };
 
 fn main() {
-    let (dir_code, station) = arguments();
+    let (dir_code, station, clock_brightness) = arguments();
     let minimum_display_min = 5i64;
     // get the initial time trains and put them in a thread safe value to be passed back and forth
     // between threads
@@ -19,7 +19,7 @@ fn main() {
             .unwrap_or_else(|err| panic!("ERROR - train_times - {}", err)),
     ));
     // create a new clock struct, this initializes the display
-    let mut clock = forest_hills_departure::ht16k33_clock::ClockDisplay::new(0x70)
+    let mut clock = forest_hills_departure::ht16k33_clock::ClockDisplay::new(0x70, clock_brightness)
         .unwrap_or_else(|err| panic!("ERROR - ClockDisplay - {}", err));
     // create a new screen struct, this initializes the display
     let mut screen = forest_hills_departure::ssd1306_screen::ScreenDisplay::new(0x3c)
@@ -60,7 +60,7 @@ fn main() {
 }
 
 /// Gets the command line arguments
-pub fn arguments() -> (String, String) {
+pub fn arguments() -> (String, String, u8) {
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
         .author("Rory Coffey <coffeyrt@gmail.com>")
@@ -83,9 +83,17 @@ pub fn arguments() -> (String, String) {
                 .possible_values(&["Forest_Hills", "South_Station"])
                 .help("Train station.  Only setup for Forest Hills and South Station right now"),
         )
+        .arg(
+            Arg::with_name("clock_brightness")
+                .short("c")
+                .long("clock_brightness")
+                .takes_value(true)
+                .help("Scale to set clock brightness, 0-9"),
+        )
         .get_matches();
     let mut dir_code = String::new();
     let mut station = String::new();
+    let mut clock_brightness;
     // reforms direction input to the direction code used in the API
     if let Some(direction_input) = args.value_of("direction") {
         match direction_input{
@@ -101,6 +109,11 @@ pub fn arguments() -> (String, String) {
             _ => panic!("Unknown station input")
         }
     };
-    return (dir_code, station);
+    if let Some(clock_bright_input) = args.value_of("clock_brightness") {
+        clock_brightness = clock_bright_input as u8;
+    }else{
+        clock_brightness = 7u8;
+    };
+    return (dir_code, station, clock_brightness);
 }
 
