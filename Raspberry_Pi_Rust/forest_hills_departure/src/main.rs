@@ -1,5 +1,6 @@
 extern crate rppal;
 extern crate std;
+use clap::{Arg, App};
 
 use forest_hills_departure;
 // use rppal::gpio;
@@ -9,11 +10,12 @@ use std::{
 };
 
 fn main() {
+    let (dir_code, station) = arguments();
     let minimum_display_min = 5i64;
     // get the initial time trains and put them in a thread safe value to be passed back and forth
     // between threads
     let train_times_option = Arc::new(Mutex::new(
-        forest_hills_departure::train_time::train_times()
+        forest_hills_departure::train_time::train_times(&dir_code, &station)
             .unwrap_or_else(|err| panic!("ERROR - train_times - {}", err)),
     ));
     // create a new clock struct, this initializes the display
@@ -27,7 +29,7 @@ fn main() {
     // In a new thread find train times every minute and replace train_times with new value
     thread::spawn(move || loop {
         thread::sleep(time::Duration::from_secs(60));
-        let new_train_times = forest_hills_departure::train_time::train_times()
+        let new_train_times = forest_hills_departure::train_time::train_times(&dir_code, &station)
             .unwrap_or_else(|err| panic!("ERROR - train_times - {}", err));
         let mut old_train = train_times_clone.lock().unwrap();
         *old_train = new_train_times;
@@ -56,3 +58,45 @@ fn main() {
         }
     }
 }
+
+/// Gets the command line arguments
+pub fn arguments() -> String {
+    let args = App::new("MBTA train departure display")
+        .version("0.2.0")
+        .author("Rory Coffey <coffeyrt@gmail.com>")
+        .about("Displays the departure of the Needham MBTA commuter rail")
+        .arg(
+            Arg::with_name("direction")
+                .short("d")
+                .long("direction")
+                .takes_value(true)
+                .required(true)
+                .possible_values(&["inbound", "outbound"])
+                .help("Train direction"),
+        )
+        .arg(
+            Arg::with_name("station")
+                .short("s")
+                .long("station")
+                .takes_value(true)
+                .required(true)
+                .possible_values(&["Forest_Hills", "South_Station"])
+                .help("Train station.  Only setup for Forest Hills and South Station right now"),
+        )
+        .get_matches();
+    let mut dir_code = String::new();
+    let mut station = String::new();
+    // reforms direction input to the direction code used in the API
+    if let Some(direction_input) = args.value_of("direction") {
+        match direction_input{
+            "inbound" => dir_code = "1",
+            "outbound" => dir_code = "0"
+        }
+    if let Some(station_input) = args.value_of("station") {
+        match station_input{
+            "Forest_Hills" => station = "forhl",
+            "South_Station" => station = "sstat"
+        }
+    };
+    return (dir_code, station);
+};
