@@ -60,7 +60,7 @@ fn main() {
 }
 
 /// Gets the command line arguments
-pub fn arguments() -> String {
+pub fn arguments() -> (String, String) {
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
         .author("Rory Coffey <coffeyrt@gmail.com>")
@@ -89,14 +89,16 @@ pub fn arguments() -> String {
     // reforms direction input to the direction code used in the API
     if let Some(direction_input) = args.value_of("direction") {
         match direction_input{
-            "inbound" => dir_code = "1",
-            "outbound" => dir_code = "0"
+            "inbound" => dir_code = "1".to_string(),
+            "outbound" => dir_code = "0".to_string()
         }
+    };
     if let Some(station_input) = args.value_of("station") {
         match station_input{
-            "Forest_Hills" => station = "forhl",
-            "South_Station" => station = "sstat"
+            "Forest_Hills" => station = "forhl".to_string(),
+            "South_Station" => station = "sstat".to_string()
         }
     };
     return (dir_code, station);
-};
+}
+
