@@ -90,13 +90,15 @@ pub fn arguments() -> (String, String) {
     if let Some(direction_input) = args.value_of("direction") {
         match direction_input{
             "inbound" => dir_code = "1".to_string(),
-            "outbound" => dir_code = "0".to_string()
+            "outbound" => dir_code = "0".to_string(),
+            _ => panic("Unknown direction input")
         }
     };
     if let Some(station_input) = args.value_of("station") {
         match station_input{
             "Forest_Hills" => station = "forhl".to_string(),
-            "South_Station" => station = "sstat".to_string()
+            "South_Station" => station = "sstat".to_string(),
+            _ => panic("Unknown station input")
         }
     };
     return (dir_code, station);
