@@ -1,6 +1,7 @@
 extern crate rppal;
 extern crate std;
 use clap::{Arg, App};
+use std::collections::HashMap;
 
 use forest_hills_departure;
 // use rppal::gpio;
@@ -109,7 +110,7 @@ pub fn arguments() -> (String, String, u8) {
         station = stations.get(station_input).unwrap();
     };
     if let Some(clock_bright_input) = args.value_of("clock_brightness") {
-        clock_brightness = clock_bright_input as u8;
+        clock_brightness = clock_bright_input.parse::<u8>().unwrap();
     }else{
         clock_brightness = 7u8;
     };
