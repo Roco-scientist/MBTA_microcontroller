@@ -1,7 +1,11 @@
 extern crate rppal;
 extern crate std;
 use clap::{Arg, App};
+use scraper::{Html, Selector};
 use std::collections::HashMap;
+use regex::Regex;
+use lazy_static::lazy_static;
+use reqwest;
 
 use forest_hills_departure;
 // use rppal::gpio;
@@ -10,8 +14,12 @@ use std::{
     thread, time,
 };
 
+lazy_static! {
+    static ref TRAIN_SPLIT: Regex = Regex::new("place-|Boat-").unwrap();
+}
+
 fn main() {
-    let (dir_code, station, clock_brightness) = arguments();
+    let (dir_code, station, clock_brightness) = arguments().unwrap_or_else(|err| panic!("ERROR - train_times - {}", err));
     let minimum_display_min = 5i64;
     // get the initial time trains and put them in a thread safe value to be passed back and forth
     // between threads
@@ -61,9 +69,10 @@ fn main() {
 }
 
 /// Gets the command line arguments
-pub fn arguments() -> (String, String, u8) {
-    let stations: HashMap<&str, &str> = [("South_Station", "sstat"), ("Forest_Hills", "forhl")].iter().cloned().collect();
-    let mut input_stations: Vec<&str> = stations.keys().cloned().collect();
+pub fn arguments() -> Result<(String, String, u8), Box<dyn std::error::Error>> {
+    // let stations: HashMap<&str, &str> = [("South_Station", "sstat"), ("Forest_Hills", "forhl")].iter().cloned().collect();
+    let stations = station_hasmap()?;
+    let mut input_stations: Vec<&str> = stations.keys().map(|key| key.as_str()).collect();
     input_stations.sort();
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
@@ -85,7 +94,7 @@ pub fn arguments() -> (String, String, u8) {
                 .takes_value(true)
                 .required(true)
                 .possible_values(&input_stations)
-                .help("Train station.  Only setup for Forest Hills and South Station right now"),
+                .help("Train station.  Only setup for commuter rail right now"),
         )
         .arg(
             Arg::with_name("clock_brightness")
@@ -110,10 +119,42 @@ pub fn arguments() -> (String, String, u8) {
         station = stations.get(station_input).unwrap().to_string();
     };
     if let Some(clock_bright_input) = args.value_of("clock_brightness") {
-        clock_brightness = clock_bright_input.parse::<u8>().unwrap();
+        clock_brightness = clock_bright_input.parse::<u8>()?;
     }else{
         clock_brightness = 7u8;
     };
-    return (dir_code, station, clock_brightness);
+    return Ok((dir_code, station, clock_brightness));
 }
 
+fn station_hasmap() -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
+    let subway_url = "https://www.mbta.com/stops/subway#subway-tab";
+    let communter_url = "https://www.mbta.com/stops/commuter-rail#commuter-rail-tab";
+    let ferry_url = "https://www.mbta.com/stops/ferry#ferry-tab";
+    let stations_info = get_stations(subway_url)?;
+    let mut station_conversion: HashMap<String, String> = stations_info.iter().cloned().collect();
+    station_conversion.extend(get_stations(communter_url)?);
+    station_conversion.extend(get_stations(ferry_url)?);
+    return Ok(station_conversion)
+}
+
+fn get_stations(url: &str) -> Result<Vec<(String, String)>, Box<dyn std::error::Error>> {
+    let website_text = reqwest::blocking::get(url)?.text()?;
+    let document = Html::parse_document(&website_text);
+    let selector = Selector::parse(r#"a[class="btn button stop-btn m-detailed-stop"]"#).unwrap();
+    let station_select = document.select(&selector);
+    let station_conversion: Vec<(String, String)> = station_select
+        .map(|button| (button
+                .value()
+                .attr("data-name")
+                .unwrap().replace(" ", "_")
+                .replace("'", ""), 
+                TRAIN_SPLIT.split(button
+                    .value()
+                    .attr("href")
+                    .unwrap())
+                .collect::<Vec<&str>>()
+                .last()
+                .unwrap()
+                .to_string())).collect();
+    return Ok(station_conversion)
+}
