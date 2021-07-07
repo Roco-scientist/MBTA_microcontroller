@@ -1,6 +1,7 @@
 extern crate rppal;
 extern crate std;
 use clap::{Arg, App};
+use scraper::Html;
 
 use forest_hills_departure;
 // use rppal::gpio;
@@ -116,3 +117,12 @@ pub fn arguments() -> (String, String, u8) {
     return (dir_code, station, clock_brightness);
 }
 
+fn station_hasmap() -> Hashmap<&str, &str> {
+    let subway_website = "https://www.mbta.com/stops/subway#subway-tab";
+    let communter_website = "https://www.mbta.com/stops/commuter-rail#commuter-rail-tab";
+    let ferry_website = "https://www.mbta.com/stops/ferry#ferry-tab";
+}
+
+fn get_stations(website: &str) -> Vec<Vec<&str, &str>> {
+
+}
