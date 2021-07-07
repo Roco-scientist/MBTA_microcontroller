@@ -63,7 +63,7 @@ fn main() {
 /// Gets the command line arguments
 pub fn arguments() -> (String, String, u8) {
     let stations: HashMap<&str, &str> = [("South_Station", "sstat"), ("Forest_Hills", "forhl")].iter().cloned().collect();
-    let input_stations: Vec<&str> = stations.keys().to_owned().collect();
+    let input_stations: Vec<&str> = stations.keys().cloned().collect();
     input_stations.sort();
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
