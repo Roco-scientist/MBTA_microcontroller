@@ -44,7 +44,7 @@ pub struct ClockDisplay {
 // Functions to initialize and change clock display
 impl ClockDisplay {
     /// Creates a new ClockDisplay struct
-    pub fn new(address: u8) -> Result<ClockDisplay, Box<dyn std::error::Error>> {
+    pub fn new(address: u8, clock_brightness: u8) -> Result<ClockDisplay, Box<dyn std::error::Error>> {
         // create new i2c interface
         let i2c = I2c::new()?;
         // connect the ht16k33 clock chip to i2c connection on the address
@@ -53,7 +53,7 @@ impl ClockDisplay {
         // turn clock display on.  Would not work otherwise
         clock.set_display(ht16k33::Display::ON)?;
         // set the dimming of the display.  This can be added to new function later
-        clock.set_dimming(ht16k33::Dimming::from_u8(7u8)?)?;
+        clock.set_dimming(ht16k33::Dimming::from_u8(clock_brightness)?)?;
         // return ClockDisplay struct with empty digits to be filled later
         Ok(ClockDisplay {
             display: clock,
