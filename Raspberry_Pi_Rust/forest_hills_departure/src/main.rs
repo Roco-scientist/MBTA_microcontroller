@@ -19,7 +19,7 @@ lazy_static! {
 }
 
 fn main() {
-    let (dir_code, station, clock_brightness) = arguments();
+    let (dir_code, station, clock_brightness) = arguments().unwrap_or_else(|err| panic!("ERROR - train_times - {}", err));
     let minimum_display_min = 5i64;
     // get the initial time trains and put them in a thread safe value to be passed back and forth
     // between threads
@@ -72,7 +72,7 @@ fn main() {
 pub fn arguments() -> Result<(String, String, u8), Box<dyn std::error::Error>> {
     // let stations: HashMap<&str, &str> = [("South_Station", "sstat"), ("Forest_Hills", "forhl")].iter().cloned().collect();
     let stations = station_hasmap()?;
-    let mut input_stations: Vec<&str> = stations.keys().cloned().collect();
+    let mut input_stations: Vec<String> = stations.keys().cloned().collect();
     input_stations.sort();
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
