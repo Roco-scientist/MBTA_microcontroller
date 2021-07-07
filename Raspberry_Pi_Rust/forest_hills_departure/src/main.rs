@@ -2,6 +2,7 @@ extern crate rppal;
 extern crate std;
 use clap::{Arg, App};
 use scraper::Html;
+use std::collections::HashMap;
 
 use forest_hills_departure;
 // use rppal::gpio;
@@ -63,7 +64,7 @@ fn main() {
 /// Gets the command line arguments
 pub fn arguments() -> (String, String, u8) {
     let stations: HashMap<&str, &str> = [("South_Station", "sstat"), ("Forest_Hills", "forhl")].iter().cloned().collect();
-    let input_stations: Vec<&str> = stations.keys().collect();
+    let mut input_stations: Vec<&str> = stations.keys().cloned().collect();
     input_stations.sort();
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
@@ -84,7 +85,7 @@ pub fn arguments() -> (String, String, u8) {
                 .long("station")
                 .takes_value(true)
                 .required(true)
-                .possible_values(&stations.keys().collect())
+                .possible_values(&input_stations)
                 .help("Train station.  Only setup for Forest Hills and South Station right now"),
         )
         .arg(
@@ -97,7 +98,7 @@ pub fn arguments() -> (String, String, u8) {
         .get_matches();
     let mut dir_code = String::new();
     let mut station = String::new();
-    let mut clock_brightness;
+    let clock_brightness;
     // reforms direction input to the direction code used in the API
     if let Some(direction_input) = args.value_of("direction") {
         match direction_input{
@@ -107,10 +108,10 @@ pub fn arguments() -> (String, String, u8) {
         }
     };
     if let Some(station_input) = args.value_of("station") {
-        station = stations.get(station_input).unwrap();
+        station = stations.get(station_input).unwrap().to_string();
     };
     if let Some(clock_bright_input) = args.value_of("clock_brightness") {
-        clock_brightness = clock_bright_input as u8;
+        clock_brightness = clock_bright_input.parse::<u8>().unwrap();
     }else{
         clock_brightness = 7u8;
     };
