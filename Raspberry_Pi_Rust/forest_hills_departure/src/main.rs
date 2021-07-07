@@ -63,7 +63,7 @@ fn main() {
 /// Gets the command line arguments
 pub fn arguments() -> (String, String, u8) {
     let stations: HashMap<&str, &str> = [("South_Station", "sstat"), ("Forest_Hills", "forhl")].iter().cloned().collect();
-    let input_stations: Vec<&str> = stations.keys().cloned().collect();
+    let mut input_stations: Vec<&str> = stations.keys().cloned().collect();
     input_stations.sort();
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
@@ -97,7 +97,7 @@ pub fn arguments() -> (String, String, u8) {
         .get_matches();
     let mut dir_code = String::new();
     let mut station = String::new();
-    let mut clock_brightness;
+    let clock_brightness;
     // reforms direction input to the direction code used in the API
     if let Some(direction_input) = args.value_of("direction") {
         match direction_input{
