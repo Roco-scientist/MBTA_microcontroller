@@ -72,7 +72,7 @@ fn main() {
 pub fn arguments() -> Result<(String, String, u8), Box<dyn std::error::Error>> {
     // let stations: HashMap<&str, &str> = [("South_Station", "sstat"), ("Forest_Hills", "forhl")].iter().cloned().collect();
     let stations = station_hasmap()?;
-    let mut input_stations: Vec<&str> = stations.keys().map(|key| &key).collect();
+    let mut input_stations: Vec<&str> = stations.keys().map(|key| key.as_str()).collect();
     input_stations.sort();
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
@@ -94,7 +94,7 @@ pub fn arguments() -> Result<(String, String, u8), Box<dyn std::error::Error>> {
                 .takes_value(true)
                 .required(true)
                 .possible_values(&input_stations)
-                .help("Train station.  Only setup for Forest Hills and South Station right now"),
+                .help("Train station.  Only setup for commuter rail right now"),
         )
         .arg(
             Arg::with_name("clock_brightness")
