@@ -3,8 +3,6 @@ extern crate std;
 use clap::{Arg, App};
 use scraper::{Html, Selector};
 use std::collections::HashMap;
-use regex::Regex;
-use lazy_static::lazy_static;
 use reqwest;
 
 use forest_hills_departure;
@@ -13,10 +11,6 @@ use std::{
     sync::{Arc, Mutex},
     thread, time,
 };
-
-lazy_static! {
-    static ref TRAIN_SPLIT: Regex = Regex::new("place-|Boat-").unwrap();
-}
 
 fn main() {
     let (dir_code, station, clock_brightness) = arguments().unwrap_or_else(|err| panic!("ERROR - train_times - {}", err));
@@ -143,18 +137,22 @@ fn get_stations(url: &str) -> Result<Vec<(String, String)>, Box<dyn std::error::
     let selector = Selector::parse(r#"a[class="btn button stop-btn m-detailed-stop"]"#).unwrap();
     let station_select = document.select(&selector);
     let station_conversion: Vec<(String, String)> = station_select
-        .map(|button| (button
+        .map(|button| (
+                button
                 .value()
                 .attr("data-name")
                 .unwrap().replace(" ", "_")
                 .replace("'", ""), 
-                TRAIN_SPLIT.split(button
-                    .value()
-                    .attr("href")
-                    .unwrap())
-                .collect::<Vec<&str>>()
+                button
+                .value()
+                .attr("href")
+                .unwrap()
+                .split("stop/")
                 .last()
                 .unwrap()
-                .to_string())).collect();
+                .to_string()
+                )
+            )
+        .collect();
     return Ok(station_conversion)
 }

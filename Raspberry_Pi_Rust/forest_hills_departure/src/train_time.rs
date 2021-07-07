@@ -59,10 +59,11 @@ fn get_prediction_times(
 fn get_scheduled_times(
     station: &str,
     dir_code: &str,
+    route_code: &str,
 ) -> Result<Option<HashMap<String, DateTime<Local>>>, Box<dyn std::error::Error>> {
     let now = chrono::Local::now();
     // MBTA API for scheduled times
-    let address = format!("https://api-v3.mbta.com/schedules?include=route,trip,stop&filter[min_time]={}%3A{}&filter[stop]=place-{}&filter[route]=CR-Needham&filter[direction_id]={}",now.hour(), now.minute(), station, dir_code);
+    let address = format!("https://api-v3.mbta.com/schedules?include=route,trip,stop&filter[min_time]={}%3A{}&filter[stop]={}&filter[route]={}&filter[direction_id]={}",now.hour(), now.minute(), station, route_code, dir_code);
     return get_rout_times(address);
 }
 
