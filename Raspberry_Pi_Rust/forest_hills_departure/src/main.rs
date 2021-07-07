@@ -72,7 +72,7 @@ fn main() {
 pub fn arguments() -> Result<(String, String, u8), Box<dyn std::error::Error>> {
     // let stations: HashMap<&str, &str> = [("South_Station", "sstat"), ("Forest_Hills", "forhl")].iter().cloned().collect();
     let stations = station_hasmap()?;
-    let mut input_stations: Vec<String> = stations.keys().cloned().collect();
+    let mut input_stations: Vec<&str> = stations.keys().collect();
     input_stations.sort();
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
