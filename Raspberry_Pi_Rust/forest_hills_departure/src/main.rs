@@ -61,6 +61,9 @@ fn main() {
 
 /// Gets the command line arguments
 pub fn arguments() -> (String, String, u8) {
+    let stations: HashMap<&str, &str> = [("South_Station", "sstat"), ("Forest_Hills", "forhl")].iter().cloned().collect();
+    let input_stations: Vec<&str> = stations.keys().collect();
+    input_stations.sort();
     let args = App::new("MBTA train departure display")
         .version("0.2.0")
         .author("Rory Coffey <coffeyrt@gmail.com>")
@@ -80,7 +83,7 @@ pub fn arguments() -> (String, String, u8) {
                 .long("station")
                 .takes_value(true)
                 .required(true)
-                .possible_values(&["Forest_Hills", "South_Station"])
+                .possible_values(&stations.keys().collect())
                 .help("Train station.  Only setup for Forest Hills and South Station right now"),
         )
         .arg(
@@ -103,11 +106,7 @@ pub fn arguments() -> (String, String, u8) {
         }
     };
     if let Some(station_input) = args.value_of("station") {
-        match station_input{
-            "Forest_Hills" => station = "forhl".to_string(),
-            "South_Station" => station = "sstat".to_string(),
-            _ => panic!("Unknown station input")
-        }
+        station = stations.get(station_input).unwrap();
     };
     if let Some(clock_bright_input) = args.value_of("clock_brightness") {
         clock_brightness = clock_bright_input as u8;
