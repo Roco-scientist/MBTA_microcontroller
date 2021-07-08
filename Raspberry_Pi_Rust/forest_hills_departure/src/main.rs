@@ -14,11 +14,12 @@ use std::{
 
 fn main() {
     let (dir_code, station, clock_brightness) = arguments().unwrap_or_else(|err| panic!("ERROR - train_times - {}", err));
+    let route_code = String::from("CR-Needham");
     let minimum_display_min = 5i64;
     // get the initial time trains and put them in a thread safe value to be passed back and forth
     // between threads
     let train_times_option = Arc::new(Mutex::new(
-        forest_hills_departure::train_time::train_times(&dir_code, &station)
+        forest_hills_departure::train_time::train_times(&dir_code, &station, &route_code)
             .unwrap_or_else(|err| panic!("ERROR - train_times - {}", err)),
     ));
     // create a new clock struct, this initializes the display
@@ -32,7 +33,7 @@ fn main() {
     // In a new thread find train times every minute and replace train_times with new value
     thread::spawn(move || loop {
         thread::sleep(time::Duration::from_secs(60));
-        let new_train_times = forest_hills_departure::train_time::train_times(&dir_code, &station)
+        let new_train_times = forest_hills_departure::train_time::train_times(&dir_code, &station, &route_code)
             .unwrap_or_else(|err| panic!("ERROR - train_times - {}", err));
         let mut old_train = train_times_clone.lock().unwrap();
         *old_train = new_train_times;
